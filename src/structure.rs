@@ -22,26 +22,46 @@ impl Application {
         let stdout = io::stdout();
         let backend = CrosstermBackend::new(stdout);
         let b_terminal = Terminal::new(backend).unwrap();
-        let app = Application {
+        let mut app = Application {
             terminal: b_terminal,
             active_folder_path: path,
             current_folder_projects: vec![],
             is_running: true,
         };
-        // Initialize the path etc
+        app.terminal.clear();
+
+        // TODO Initialize the path etc
         app
     }
     fn display_main_window(&mut self) {
         self.terminal.draw(|f| {
-            let chunks = Layout::default()
+            let mut main_layout = Layout::default()
                 .direction(Direction::Horizontal)
                 .margin(1)
                 .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                 .split(f.size());
+            let project_layout = Layout::default()
+                .direction(Direction::Vertical)
+                .margin(0)
+                .constraints([Constraint::Percentage(80), Constraint::Percentage(20)].as_ref())
+                .split(main_layout[0]);
             let block = Block::default().title("Projects").borders(Borders::ALL);
-            f.render_widget(block, chunks[0]);
-            let block = Block::default().title("Tasks").borders(Borders::ALL);
-            f.render_widget(block, chunks[1]);
+            f.render_widget(block, project_layout[0]);
+            let block = Block::default()
+                .title("Project description")
+                .borders(Borders::ALL);
+            f.render_widget(block, project_layout[1]);
+            let task_layout = Layout::default()
+                .direction(Direction::Vertical)
+                .margin(0)
+                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+                .split(main_layout[1]);
+            let block = Block::default().title("Active tasks").borders(Borders::ALL);
+            f.render_widget(block, task_layout[0]);
+            let block = Block::default()
+                .title("Completed tasks")
+                .borders(Borders::ALL);
+            f.render_widget(block, task_layout[1]);
         });
     }
     fn display_project_window(&mut self) {
