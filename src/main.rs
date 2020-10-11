@@ -6,6 +6,8 @@ use std::{
     time::{Duration, Instant},
 };
 
+mod utils;
+
 enum Event<I> {
     Input(I),
     Tick,
@@ -16,10 +18,8 @@ fn main() {
     // for a in args {
     //     println!("{}", a);
     // }
-
-    let home_path = dirs::home_dir().unwrap();
+    utils::create_working_folder_if_not_exist();
     let (tx, rx) = mpsc::channel();
-
     let tick_rate = Duration::from_millis(250);
     thread::spawn(move || {
         let mut last_tick = Instant::now();
@@ -40,12 +40,13 @@ fn main() {
         }
     });
 
-    let mut app = structure::Application::new(home_path);
+    let mut app = structure::Application::new(utils::get_working_folder());
     while app.is_running {
         app.update();
         match rx.recv().unwrap() {
             Event::Input(event) => match event.code {
                 // KeyCode::Char(c) => app.on_key(c),
+                KeyCode::Char(q) => app.quit(),
                 // KeyCode::Left => app.on_left(),
                 KeyCode::Up => app.press_up(),
                 // KeyCode::Right => app.on_right(),

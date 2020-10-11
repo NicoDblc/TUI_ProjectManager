@@ -5,15 +5,15 @@ use std::io;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
 
-use std::ffi::OsStr;
-use std::fs::ReadDir;
-use tui::layout::{Constraint, Direction, Layout};
-use tui::style::{Color, Modifier, Style};
-use tui::text::Text;
-use tui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Widget};
 
-static PROJECT_FILE_EXTENSION: &str = "pman";
-// Application: Must display available projects from the ~/.project_manager or from the local folder
+
+use tui::layout::{Constraint, Direction, Layout};
+use tui::text::Text;
+use tui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph};
+
+use crate::utils;
+
+// needs List<ListItem> representing the Vec<T> in order to be fully useful
 #[derive(Default)]
 struct DisplayList<T> {
     state: ListState,
@@ -24,8 +24,23 @@ impl<T> DisplayList<T> {
     fn next(&mut self) {
         let i = match self.state.selected() {
             Some(i) => {
-                if i < self.array.len() {
+                if i < self.array.len() - 1 {
                     i + 1
+                } else {
+                    i
+                }
+            }
+            None => 0,
+        };
+        if self.array.len() > 0 {
+            self.state.select(Some(i));
+        }
+    }
+    fn previous(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i > 0 {
+                    i - 1
                 } else {
                     0
                 }
@@ -34,19 +49,18 @@ impl<T> DisplayList<T> {
         };
         self.state.select(Some(i));
     }
-    fn previous(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i > 0 {
-                    i - 1
-                }else {
-                    0
-                }
 
-            }
-            None => 0,
+    pub fn from(content: Vec<T>) -> DisplayList<T> {
+        let content_len = content.len();
+        let mut dl = DisplayList {
+            state: Default::default(),
+            array: content
         };
-        self.state.select(Some(i));
+        // TODO: add a check to see if array is empty
+        if content_len > 0 {
+            dl.state.select(Some(0));
+        }
+        dl
     }
 }
 pub struct Application {
@@ -65,36 +79,26 @@ impl Application {
         for file in folder_result {
             let f = file.unwrap();
             if f.file_type().unwrap().is_file() {
-                let extension = match f.path().extension() {
+                match f.path().extension() {
                     Some(ext) => {
-                        if ext == PROJECT_FILE_EXTENSION {
+                        if ext == utils::PROJECT_FILE_EXTENSION {
+                            println!("Extension matches");
                             match match serde_json::from_str(
                                 std::fs::read_to_string(f.path()).unwrap().as_str(),
                             ) {
                                 Ok(result) => Some(result),
-                                Err(E) => None,
+                                Err(_) => None,
                             } {
-                                Some(project) => serialized_projects.push(project),
+                                Some(project) => {
+                                    serialized_projects.push(project) },
                                 _ => {}
                             }
                         }
                     }
                     _ => {}
                 };
-                // if f.path().extension().unwrap() == PROJECT_FILE_EXTENSION {
-                //     match match serde_json::from_str(
-                //         std::fs::read_to_string(f.path()).unwrap().as_str(),
-                //     ) {
-                //         Ok(result) => Some(result),
-                //         Err(E) => None,
-                //     } {
-                //         Some(project) => serialized_projects.push(project),
-                //         _ => {}
-                //     };
-                // }
             }
         }
-
         let stdout = io::stdout();
         let backend = CrosstermBackend::new(stdout);
         let mut b_terminal = Terminal::new(backend).unwrap();
@@ -102,7 +106,7 @@ impl Application {
         let app = Application {
             terminal: b_terminal,
             active_folder_path: path,
-            project_list: DisplayList::default(),
+            project_list: DisplayList::from(serialized_projects),
             is_running: true,
         };
         // adding test projects
@@ -121,13 +125,10 @@ impl Application {
     }
     fn display_main_window(&mut self) {
         let text_active_path = Text::from(self.active_folder_path.to_str().unwrap());
-        let mut projects_list_viz: Vec<ListItem> = vec![];
-        for p in &self.project_list.array {
-            projects_list_viz.push(ListItem::new(Text::from(p.name.clone())));
-        }
-
+        let mut projects_list_viz: Vec<ListItem> = self.project_list.array.clone().into_iter().map(|p| ListItem::new(Text::from(p.name))).collect();
+        let mut project_state :ListState =  self.project_list.state.clone();
         let project_list = &self.project_list;
-        // This shit is getting ugly, I don't like it
+
         self.terminal
             .draw(|f| {
                 let window_layout = Layout::default()
@@ -137,29 +138,29 @@ impl Application {
 
                 let current_project_path = Paragraph::new(text_active_path);
                 f.render_widget(current_project_path, window_layout[0]);
+
                 let main_layout = Layout::default()
                     .direction(Direction::Horizontal)
                     .margin(1)
                     .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                     .split(window_layout[1]);
 
+                // Project lists
                 let project_layout = Layout::default()
                     .direction(Direction::Vertical)
                     .margin(0)
                     .constraints([Constraint::Percentage(80), Constraint::Percentage(20)].as_ref())
                     .split(main_layout[0]);
                 let block = Block::default().title("Projects").borders(Borders::ALL);
-                //f.render_widget(block, project_layout[0]);
-                // Project lists
-                let p_list = List::new(projects_list_viz)
+                let p_list = List::new::<Vec<ListItem>>(project_list.array.clone().into_iter().map(|p| ListItem::new(Text::from(p.name))).collect())
                     .block(block)
                     .highlight_style(
                         tui::style::Style::default()
-                            .bg(tui::style::Color::DarkGray)
+                            .bg(tui::style::Color::Green)
                             .add_modifier(tui::style::Modifier::BOLD),
                     )
                     .highlight_symbol("-> ");
-                f.render_widget(p_list, project_layout[0]);
+                f.render_stateful_widget(p_list, project_layout[0], &mut project_state);
 
                 let block = Block::default()
                     .title("Project description")
@@ -182,21 +183,15 @@ impl Application {
                     .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                     .split(main_layout[1]);
                 let block = Block::default().title("Active tasks").borders(Borders::ALL);
-                // TODO create List with task items
 
                 let new_list: Vec<ListItem> = match project_list.array.len() > 0 {
-                    true => {
-                        project_list.array
-                            [project_list.state.selected().unwrap()]
-                            .active_tasks
-                            .clone()
-                            .into_iter()
-                            .map(|a| ListItem::new(Text::from(a.description)))
-                            .collect()
-                    },
-                    false => {
-                        Vec::new()
-                    }
+                    true => project_list.array[project_list.state.selected().unwrap()]
+                        .active_tasks
+                        .clone()
+                        .into_iter()
+                        .map(|a| ListItem::new(Text::from(a.description)))
+                        .collect(),
+                    false => Vec::new(),
                 };
 
                 let current_task_list = List::new(new_list).block(block);
@@ -206,18 +201,13 @@ impl Application {
                     .title("Completed tasks")
                     .borders(Borders::ALL);
                 let new_list: Vec<ListItem> = match project_list.array.len() > 0 {
-                    true => {
-                        project_list.array
-                            [project_list.state.selected().unwrap()]
-                            .completed_tasks
-                            .clone()
-                            .into_iter()
-                            .map(|a| ListItem::new(Text::from(a.description)))
-                            .collect()
-                    }
-                    false => {
-                        Vec::new()
-                    }
+                    true => project_list.array[project_list.state.selected().unwrap()]
+                        .completed_tasks
+                        .clone()
+                        .into_iter()
+                        .map(|a| ListItem::new(Text::from(a.description)))
+                        .collect(),
+                    false => Vec::new(),
                 };
 
                 let completed_tasks_list = List::new(new_list).block(block);
@@ -231,6 +221,12 @@ impl Application {
     pub fn update(&mut self) {
         self.display_main_window();
     }
+
+    pub fn quit(&mut self) {
+        self.is_running = false;
+        self.terminal.clear();
+        self.terminal.
+    }
 }
 
 trait InformationDisplay {
@@ -242,20 +238,20 @@ trait Completable {
     fn complete(&self);
 }
 
-trait TaskContainer {
+pub trait TaskContainer {
     fn add_task(&mut self, task_description: String);
 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]
 pub struct Project {
-    name: String,
-    description: String,
+    pub name: String,
+    pub description: String,
     active_tasks: Vec<Task>,
     completed_tasks: Vec<Task>,
 }
 
 impl Project {
-    fn new(project_name: String) -> Project {
+    pub fn new(project_name: String) -> Project {
         Project {
             name: project_name,
             description: String::from("Sample description"),
@@ -306,14 +302,4 @@ impl TaskContainer for Task {
         };
         self.sub_tasks.push(task);
     }
-}
-
-struct A {
-    word: String,
-    number: u32,
-}
-
-fn some_function() {
-    let some_A: Vec<A> = Vec::new();
-    let phrases: Vec<String> = Vec::new();
 }

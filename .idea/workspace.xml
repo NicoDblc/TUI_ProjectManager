@@ -1,12 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="BranchesTreeState">
+    <expand>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </expand>
+    <select />
+  </component>
   <component name="CargoProjects">
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="dfde29e1-6ab3-430e-8399-b174564982e3" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/utils.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/structure.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/structure.rs" afterDir="false" />
     </list>
@@ -14,6 +32,13 @@
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Rust File" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -29,10 +54,12 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="TERMINAL_CUSTOM_COMMANDS_GOT_IT" value="true" />
     <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
   </component>
   <component name="RustProjectSettings">
     <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
+    <option name="version" value="2" />
   </component>
   <component name="SvnConfiguration">
     <configuration />
@@ -47,30 +74,53 @@
     </task>
     <servers />
   </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="WindowStateProjectService">
     <state x="297" y="349" key="#Plugins" timestamp="1602211737290">
       <screen x="0" y="0" width="2560" height="1410" />
     </state>
     <state x="297" y="349" key="#Plugins/0.0.2560.1410@0.0.2560.1410" timestamp="1602211737290" />
-    <state width="902" height="1352" key="GridCell.Tab.0.bottom" timestamp="1602222609602">
+    <state x="994" y="516" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog" timestamp="1602348260777">
       <screen x="0" y="0" width="2560" height="1410" />
     </state>
-    <state width="902" height="1352" key="GridCell.Tab.0.bottom/0.0.2560.1410@0.0.2560.1410" timestamp="1602222609602" />
-    <state width="902" height="1352" key="GridCell.Tab.0.center" timestamp="1602222609602">
+    <state x="994" y="516" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog/0.0.2560.1410@0.0.2560.1410" timestamp="1602348260777" />
+    <state width="1102" height="1352" key="GridCell.Tab.0.bottom" timestamp="1602363744368">
       <screen x="0" y="0" width="2560" height="1410" />
     </state>
-    <state width="902" height="1352" key="GridCell.Tab.0.center/0.0.2560.1410@0.0.2560.1410" timestamp="1602222609602" />
-    <state width="902" height="1352" key="GridCell.Tab.0.left" timestamp="1602222609602">
+    <state width="1102" height="1352" key="GridCell.Tab.0.bottom/0.0.2560.1410@0.0.2560.1410" timestamp="1602363744368" />
+    <state width="1102" height="1352" key="GridCell.Tab.0.center" timestamp="1602363744368">
       <screen x="0" y="0" width="2560" height="1410" />
     </state>
-    <state width="902" height="1352" key="GridCell.Tab.0.left/0.0.2560.1410@0.0.2560.1410" timestamp="1602222609602" />
-    <state width="902" height="1352" key="GridCell.Tab.0.right" timestamp="1602222609602">
+    <state width="1102" height="1352" key="GridCell.Tab.0.center/0.0.2560.1410@0.0.2560.1410" timestamp="1602363744368" />
+    <state width="1102" height="1352" key="GridCell.Tab.0.left" timestamp="1602363744368">
       <screen x="0" y="0" width="2560" height="1410" />
     </state>
-    <state width="902" height="1352" key="GridCell.Tab.0.right/0.0.2560.1410@0.0.2560.1410" timestamp="1602222609602" />
-    <state x="368" y="323" width="672" height="678" key="search.everywhere.popup" timestamp="1602222091782">
+    <state width="1102" height="1352" key="GridCell.Tab.0.left/0.0.2560.1410@0.0.2560.1410" timestamp="1602363744368" />
+    <state width="1102" height="1352" key="GridCell.Tab.0.right" timestamp="1602363744368">
       <screen x="0" y="0" width="2560" height="1410" />
     </state>
-    <state x="368" y="323" width="672" height="678" key="search.everywhere.popup/0.0.2560.1410@0.0.2560.1410" timestamp="1602222091782" />
+    <state width="1102" height="1352" key="GridCell.Tab.0.right/0.0.2560.1410@0.0.2560.1410" timestamp="1602363744368" />
+    <state x="794" y="453" width="540" height="524" key="StructurePopup" timestamp="1602362711538">
+      <screen x="0" y="0" width="2560" height="1410" />
+    </state>
+    <state x="794" y="453" width="540" height="524" key="StructurePopup/0.0.2560.1410@0.0.2560.1410" timestamp="1602362711538" />
+    <state x="936" y="333" key="run.anything.popup" timestamp="1602379275680">
+      <screen x="0" y="0" width="2560" height="1410" />
+    </state>
+    <state x="936" y="333" key="run.anything.popup/0.0.2560.1410@0.0.2560.1410" timestamp="1602379275680" />
+    <state x="368" y="323" width="672" height="678" key="search.everywhere.popup" timestamp="1602358590107">
+      <screen x="0" y="0" width="2560" height="1410" />
+    </state>
+    <state x="368" y="323" width="672" height="678" key="search.everywhere.popup/0.0.2560.1410@0.0.2560.1410" timestamp="1602358590107" />
   </component>
 </project>
