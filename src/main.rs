@@ -6,6 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+mod ui;
 mod utils;
 
 enum Event<I> {
