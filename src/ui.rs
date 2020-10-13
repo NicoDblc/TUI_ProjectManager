@@ -5,13 +5,15 @@ use std::io;
 use tui::backend::CrosstermBackend;
 use tui::{Frame, Terminal};
 
-use tui::layout::{Constraint, Direction, Layout};
+use tui::layout::{Constraint, Direction, Layout, Rect};
 use tui::text::Text;
 use tui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph};
 
 use crate::structure::Project;
 use crate::utils;
 use std::io::Stdout;
+use crossterm::event::KeyCode;
+use serde_json;
 
 #[derive(Default)]
 struct DisplayList<T> {
@@ -55,7 +57,6 @@ impl<T> DisplayList<T> {
             state: Default::default(),
             array: content,
         };
-        // TODO: add a check to see if array is empty
         if content_len > 0 {
             dl.state.select(Some(0));
         }
@@ -63,9 +64,10 @@ impl<T> DisplayList<T> {
     }
 }
 
-// TODO: Move all window related struct to a new UI mod
 pub trait Window {
-    fn display(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>);
+    fn display(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect);
+    fn get_controls_description(&self) -> String;
+    fn handle_input_key(&mut self, key_code: KeyCode);
     fn input_up(&mut self);
     fn input_down(&mut self);
 }
@@ -108,15 +110,31 @@ impl<'a> ProjectWindow<'a> {
         .map(|a| ListItem::new(Text::from(a.description)))
         .collect();
     }
+
+    fn add_project_request(&mut self) {
+        // TODO: popup to add name and description to project
+    }
+
+    fn delete_selected_project(&mut self) {
+        // TODO: delete selected project
+    }
+
+    fn edit_selected_project_name(&mut self) {
+        // TODO: Implement (with pop up)
+    }
+
+    fn edit_selected_project_description(&mut self) {
+        // TODO: Implement (with pop up)
+    }
 }
 
 impl<'a> Window for ProjectWindow<'a> {
-    fn display(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>) {
+    fn display(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
         let main_layout = Layout::default()
             .direction(Direction::Horizontal)
             .margin(1)
             .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-            .split(frame.size());
+            .split(layout);
 
         let project_layout = Layout::default()
             .direction(Direction::Vertical)
@@ -175,11 +193,41 @@ impl<'a> Window for ProjectWindow<'a> {
         frame.render_widget(completed_tasks_list, task_layout[1]);
     }
 
+    fn get_controls_description(&self) -> String {
+        String::from("a - Add project     d - Delete project     e - Edit Project Description     n - Edit Project name")
+    }
+
+    fn handle_input_key(&mut self, key_code: KeyCode){
+        match key_code {
+            KeyCode::Up => {
+                self.input_up();
+            }
+            KeyCode::Down => {
+                self.input_down();
+            }
+            KeyCode::Char('a') => {
+                self.add_project_request();
+            }
+            KeyCode::Char('d') => {
+                self.delete_selected_project();
+            }
+            KeyCode::Char('e') => {
+                self.edit_selected_project_description();
+            }
+            KeyCode::Char('n') => {
+                self.edit_selected_project_name();
+            }
+            _ => {}
+        }
+    }
+
     fn input_up(&mut self) {
         self.projects_to_display.previous();
+        self.update_project_selection();
     }
 
     fn input_down(&mut self) {
         self.projects_to_display.next();
+        self.update_project_selection();
     }
 }

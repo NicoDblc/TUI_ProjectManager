@@ -46,13 +46,7 @@ fn main() {
         app.update();
         match rx.recv().unwrap() {
             Event::Input(event) => match event.code {
-                // KeyCode::Char(c) => app.on_key(c),
-                KeyCode::Char(q) => app.quit(),
-                // KeyCode::Left => app.on_left(),
-                KeyCode::Up => app.press_up(),
-                // KeyCode::Right => app.on_right(),
-                KeyCode::Down => app.press_down(),
-                _ => {}
+                _ => {app.handle_inputs(event.code)}
             },
             Event::Tick => {}
         }
