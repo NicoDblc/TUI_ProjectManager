@@ -125,8 +125,8 @@ impl<'a> Application<'a> {
 }
 
 trait InformationDisplay {
-    fn display_description(&self);
-    fn display_full(&self);
+    fn get_description(&self) -> String;
+    fn get_name(&self) -> String;
 }
 
 trait Completable {
@@ -183,8 +183,13 @@ impl Task {
 }
 
 impl InformationDisplay for Task {
-    fn display_description(&self) {}
-    fn display_full(&self) {}
+    fn get_description(&self) -> String {
+        self.description.clone()
+    }
+
+    fn get_name(&self) -> String {
+        self.description.clone()
+    }
 }
 
 impl TaskContainer for Task {

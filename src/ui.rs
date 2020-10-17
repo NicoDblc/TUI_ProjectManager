@@ -70,6 +70,33 @@ pub trait Window {
     fn handle_input_key(&mut self, key_code: KeyCode);
     fn input_up(&mut self);
     fn input_down(&mut self);
+
+    fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+        let popup_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(
+                [
+                    Constraint::Percentage((100 - percent_y) / 2),
+                    Constraint::Percentage(percent_y),
+                    Constraint::Percentage((100 - percent_y) / 2),
+                ]
+                    .as_ref(),
+            )
+            .split(r);
+
+        Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(
+                [
+                    Constraint::Percentage((100 - percent_x) / 2),
+                    Constraint::Percentage(percent_x),
+                    Constraint::Percentage((100 - percent_x) / 2),
+                ]
+                    .as_ref(),
+            )
+            .split(popup_layout[1])[1]
+    }
+
 }
 
 pub struct ProjectWindow<'a> {
@@ -109,6 +136,10 @@ impl<'a> ProjectWindow<'a> {
         .into_iter()
         .map(|a| ListItem::new(Text::from(a.description)))
         .collect();
+    }
+    fn draw_project_addition_popup(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
+        let popup_layout:Rect = <ProjectWindow as Window>::centered_rect(50,50, layout);
+
     }
 
     fn add_project_request(&mut self) {
