@@ -14,11 +14,17 @@ use crate::utils;
 use std::io::Stdout;
 use crossterm::event::KeyCode;
 use serde_json;
+use crossterm::event::Event::Key;
 
 #[derive(Default)]
 struct DisplayList<T> {
     state: ListState,
     array: Vec<T>,
+}
+
+enum InputMode {
+    CommandMode,
+    WriteMode,
 }
 
 impl<T> DisplayList<T> {
@@ -64,13 +70,59 @@ impl<T> DisplayList<T> {
     }
 }
 
+struct PopupWindow {
+    description: String,
+    input_string: String,
+    message_input_finished: bool,
+}
+
+impl PopupWindow {
+    fn new(popup_description: String) -> PopupWindow {
+        PopupWindow {
+            description: popup_description,
+            input_string: String::new(),
+            message_input_finished: false,
+        }
+    }
+    fn is_message_inputed(&self) -> (bool, String) {
+        (self.message_input_finished, self.input_string.clone())
+    }
+}
+
+impl Window for PopupWindow {
+    fn display(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
+        // TODO: Create centered + Paragraph asking + Paragraph Input
+        let popup_layout = <PopupWindow as Window>::centered_rect(50,50,layout);
+
+    }
+
+    fn get_controls_description(&self) -> String {
+        String::from("Enter your project's description and press enter.")
+    }
+
+    fn handle_input_key(&mut self, key_code: KeyCode) {
+        match key_code {
+            KeyCode::Char(char) => {
+                self.input_string.push(char);
+            },
+            KeyCode::Backspace => {
+                if self.input_string.len() > 0 {
+                    self.input_string.pop();
+                }
+            },
+            KeyCode::Enter => {
+                // Message is completed
+                // TODO: Send message back
+            },
+            (_) =>{}
+        };
+    }
+}
+
 pub trait Window {
     fn display(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect);
     fn get_controls_description(&self) -> String;
     fn handle_input_key(&mut self, key_code: KeyCode);
-    fn input_up(&mut self);
-    fn input_down(&mut self);
-
     fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         let popup_layout = Layout::default()
             .direction(Direction::Vertical)
@@ -104,19 +156,23 @@ pub struct ProjectWindow<'a> {
     projects_to_display: DisplayList<Project>,
     selected_project_active_tasks: Vec<ListItem<'a>>,
     selected_project_completed_tasks: Vec<ListItem<'a>>,
+    project_input_popup: PopupWindow,
+    input_mode: InputMode,
 }
 
 impl<'a> ProjectWindow<'a> {
     pub fn new(projects: Vec<Project>) -> ProjectWindow<'a> {
-        let mut pw = ProjectWindow {
+        let mut project_window = ProjectWindow {
             projects_to_display: DisplayList::from(projects),
             selected_project_active_tasks: Vec::new(),
             selected_project_completed_tasks: Vec::new(),
+            project_input_popup: PopupWindow::new(String::from("Enter Project Name")),
+            input_mode: InputMode::CommandMode,
         };
-        if pw.projects_to_display.array.len() > 0 {
-            pw.update_project_selection();
+        if project_window.projects_to_display.array.len() > 0 {
+            project_window.update_project_selection();
         }
-        pw
+        project_window
     }
 
     fn next_project_selection(&mut self) {}
@@ -137,12 +193,9 @@ impl<'a> ProjectWindow<'a> {
         .map(|a| ListItem::new(Text::from(a.description)))
         .collect();
     }
-    fn draw_project_addition_popup(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
-        let popup_layout:Rect = <ProjectWindow as Window>::centered_rect(50,50, layout);
-
-    }
 
     fn add_project_request(&mut self) {
+        self.input_mode = InputMode::WriteMode;
         // TODO: popup to add name and description to project
     }
 
@@ -222,6 +275,9 @@ impl<'a> Window for ProjectWindow<'a> {
         let completed_tasks_list =
             List::new(self.selected_project_completed_tasks.clone()).block(block);
         frame.render_widget(completed_tasks_list, task_layout[1]);
+        if let InputMode::WriteMode = self.input_mode {
+            self.project_input_popup.display(frame, layout);
+        }
     }
 
     fn get_controls_description(&self) -> String {
@@ -229,36 +285,40 @@ impl<'a> Window for ProjectWindow<'a> {
     }
 
     fn handle_input_key(&mut self, key_code: KeyCode){
-        match key_code {
-            KeyCode::Up => {
-                self.input_up();
+        match self.input_mode {
+            InputMode::CommandMode => {
+                match key_code {
+                    KeyCode::Up => {
+                        self.projects_to_display.previous();
+                        self.update_project_selection();
+                    }
+                    KeyCode::Down => {
+                        self.projects_to_display.next();
+                        self.update_project_selection();
+                    }
+                    KeyCode::Char('a') => {
+                        self.add_project_request();
+                    }
+                    KeyCode::Char('d') => {
+                        self.delete_selected_project();
+                    }
+                    KeyCode::Char('e') => {
+                        self.edit_selected_project_description();
+                    }
+                    KeyCode::Char('n') => {
+                        self.edit_selected_project_name();
+                    }
+                    _ => {}
+                }
+            },
+            InputMode::WriteMode => {
+                self.project_input_popup.handle_input_key(key_code);
+                let pop_status = self.project_input_popup.is_message_inputed();
+                if pop_status.0 {
+                    // TODO: Insert new project with pop_status description
+                }
             }
-            KeyCode::Down => {
-                self.input_down();
-            }
-            KeyCode::Char('a') => {
-                self.add_project_request();
-            }
-            KeyCode::Char('d') => {
-                self.delete_selected_project();
-            }
-            KeyCode::Char('e') => {
-                self.edit_selected_project_description();
-            }
-            KeyCode::Char('n') => {
-                self.edit_selected_project_name();
-            }
-            _ => {}
         }
-    }
 
-    fn input_up(&mut self) {
-        self.projects_to_display.previous();
-        self.update_project_selection();
-    }
-
-    fn input_down(&mut self) {
-        self.projects_to_display.next();
-        self.update_project_selection();
     }
 }
