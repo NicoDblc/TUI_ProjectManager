@@ -33,40 +33,17 @@ pub struct Application<'a> {
 
 impl<'a> Application<'a> {
     pub fn new(path: std::path::PathBuf) -> Application<'a> {
-        // load all project files from the path
-        // TODO open the .pman folder instead and read projects from there
-        let folder_result = std::fs::read_dir(path.as_path()).unwrap();
-        let mut serialized_projects: Vec<Project> = vec![];
-        for file in folder_result {
-            let f = file.unwrap();
-            if f.file_type().unwrap().is_file() {
-                match f.path().extension() {
-                    Some(ext) => {
-                        if ext == utils::PROJECT_FILE_EXTENSION {
-                            println!("Extension matches");
-                            match match serde_json::from_str(
-                                std::fs::read_to_string(f.path()).unwrap().as_str(),
-                            ) {
-                                Ok(result) => Some(result),
-                                Err(_) => None,
-                            } {
-                                Some(project) => serialized_projects.push(project),
-                                _ => {}
-                            }
-                        }
-                    }
-                    _ => {}
-                };
-            }
-        }
+        let serialized_projects= utils::get_projects_in_path(path.clone());
         let stdout = io::stdout();
         let backend = CrosstermBackend::new(stdout);
         let mut b_terminal = Terminal::new(backend).unwrap();
         b_terminal.clear().unwrap();
+        let mut app_project_window = ProjectWindow::new(serialized_projects);
+        app_project_window.set_program_work_path(path.clone());
         Application {
             terminal: b_terminal,
             active_folder_path: path,
-            project_window: ProjectWindow::new(serialized_projects),
+            project_window: app_project_window,
             is_running: true,
             selected_window: SelectedWindow::Project,
         }
@@ -117,14 +94,13 @@ impl<'a> Application<'a> {
                 }
             }
             SelectedWindow::Task => {
-                // TODO: Handle/crete task window
+                // TODO: Handle/create task window
             }
         }
     }
     pub fn quit(&mut self) {
         self.is_running = false;
-        self.terminal.clear();
-        // TODO: Fix the weird look on the terminal after closing
+        self.terminal.flush();
     }
 }
 

@@ -27,6 +27,33 @@ pub fn get_working_folder() -> PathBuf {
     home_path.join(Path::new(folder_path.as_str()))
 }
 
+pub fn get_projects_in_path(path: PathBuf) -> Vec<Project> {
+    let mut serialized_projects: Vec<Project> = vec![];
+    let folder_result = std::fs::read_dir(path.as_path()).unwrap();
+    for file in folder_result {
+        let f = file.unwrap();
+        if f.file_type().unwrap().is_file() {
+            match f.path().extension() {
+                Some(ext) => {
+                    if ext == PROJECT_FILE_EXTENSION {
+                        match match serde_json::from_str(
+                            std::fs::read_to_string(f.path()).unwrap().as_str(),
+                        ) {
+                            Ok(result) => Some(result),
+                            Err(_) => None,
+                        } {
+                            Some(project) => serialized_projects.push(project),
+                            _ => {}
+                        }
+                    }
+                }
+                _ => {}
+            };
+        }
+    }
+    serialized_projects
+}
+
 #[test]
 fn create_dummy_project() {
     create_dummy_project_with_name("project1".to_string());

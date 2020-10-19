@@ -17,8 +17,9 @@ use serde_json;
 use crossterm::event::Event::Key;
 use crate::Event::Input;
 use tui::style::{Color, Style};
-use crate::utils::get_working_folder;
+use crate::utils::{get_working_folder, get_projects_in_path};
 use std::path::PathBuf;
+use std::ops::Add;
 
 #[derive(Default)]
 struct DisplayList<T> {
@@ -177,6 +178,7 @@ pub struct ProjectWindow<'a> {
     selected_project_completed_tasks: Vec<ListItem<'a>>,
     project_input_popup: PopupWindow,
     input_mode: InputMode,
+    program_work_path: PathBuf,
 }
 
 impl<'a> ProjectWindow<'a> {
@@ -187,11 +189,16 @@ impl<'a> ProjectWindow<'a> {
             selected_project_completed_tasks: Vec::new(),
             project_input_popup: PopupWindow::new(String::from("Enter Project Name")),
             input_mode: InputMode::CommandMode,
+            program_work_path: PathBuf::new(),
         };
         if project_window.projects_to_display.array.len() > 0 {
             project_window.update_project_selection();
         }
         project_window
+    }
+
+    fn update_projects(&mut self, projects: Vec<Project>) {
+        self.projects_to_display = DisplayList::from(projects);
     }
 
     fn next_project_selection(&mut self) {}
@@ -345,12 +352,17 @@ impl<'a> Window for ProjectWindow<'a> {
                 self.project_input_popup.handle_input_key(key_code);
                 let popup_status = self.project_input_popup.is_message_inputted();
                 if popup_status.0 {
-                    // TODO:
-                    // - Add project to the provided path by the user.
-                    //      - handle path pass as parameter to the program
-                    //      - App struct must be able to pass param to the window so it can create the project
-                    //      - Create the project in the provided path
-
+                    // create new project with provided message
+                    // reload the DisplayList
+                    let new_project = Project::new(popup_status.1.clone());
+                    let project_string = match serde_json::to_string(&new_project){
+                        Ok(p_string) => {p_string},
+                        Err(e) => {println!("Error while creating project: {}",e); return;} // TODO: Replace with a popup
+                    };
+                    let mut project_file_path = self.program_work_path.join(new_project.name);
+                    project_file_path.set_extension(utils::PROJECT_FILE_EXTENSION);
+                    std::fs::write(project_file_path,project_string).unwrap();
+                    self.projects_to_display = DisplayList::from(get_projects_in_path(self.program_work_path.clone()));
                     self.input_mode = InputMode::CommandMode;
                 }
             }
@@ -358,7 +370,7 @@ impl<'a> Window for ProjectWindow<'a> {
 
     }
 
-    fn set_program_work_path(&mut self, program_work_path: PathBuf) {
-        // TODO: Implement
+    fn set_program_work_path(&mut self, new_program_work_path: PathBuf) {
+        self.program_work_path = new_program_work_path;
     }
 }
