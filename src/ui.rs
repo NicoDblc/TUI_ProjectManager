@@ -5,9 +5,9 @@ use std::io;
 use tui::backend::CrosstermBackend;
 use tui::{Frame, Terminal};
 
-use tui::layout::{Constraint, Direction, Layout, Rect};
+use tui::layout::{Constraint, Direction, Layout, Rect, Alignment};
 use tui::text::Text;
-use tui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph};
+use tui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph, BorderType, Clear, Wrap};
 
 use crate::structure::Project;
 use crate::utils;
@@ -15,6 +15,10 @@ use std::io::Stdout;
 use crossterm::event::KeyCode;
 use serde_json;
 use crossterm::event::Event::Key;
+use crate::Event::Input;
+use tui::style::{Color, Style};
+use crate::utils::get_working_folder;
+use std::path::PathBuf;
 
 #[derive(Default)]
 struct DisplayList<T> {
@@ -22,7 +26,7 @@ struct DisplayList<T> {
     array: Vec<T>,
 }
 
-enum InputMode {
+pub enum InputMode {
     CommandMode,
     WriteMode,
 }
@@ -84,20 +88,30 @@ impl PopupWindow {
             message_input_finished: false,
         }
     }
-    fn is_message_inputed(&self) -> (bool, String) {
+    fn is_message_inputted(&self) -> (bool, String) {
         (self.message_input_finished, self.input_string.clone())
     }
 }
 
 impl Window for PopupWindow {
     fn display(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
-        // TODO: Create centered + Paragraph asking + Paragraph Input
-        let popup_layout = <PopupWindow as Window>::centered_rect(50,50,layout);
-
+        let popup_layout = <PopupWindow as Window>::centered_rect(50,25,layout);
+        frame.render_widget(Clear, popup_layout);
+        let popup_block = Block::default().borders(Borders::ALL);
+        frame.render_widget(popup_block, popup_layout);
+        let main_popup_layout = Layout::default().direction(Direction::Vertical).constraints([Constraint::Percentage(10),Constraint::Percentage(90)]).split(popup_layout);
+        let description_paragraph = Paragraph::new(Text::from(self.get_controls_description())).alignment(Alignment::Center);
+        frame.render_widget(description_paragraph, main_popup_layout[0]);
+        let input_paragraph = Paragraph::new(Text::from(self.input_string.clone())).wrap(Wrap{trim:false}).alignment(Alignment::Center);
+        frame.render_widget(input_paragraph, main_popup_layout[1]);
     }
 
     fn get_controls_description(&self) -> String {
-        String::from("Enter your project's description and press enter.")
+        String::from(self.description.clone())
+    }
+
+    fn get_input_mode(&self) -> InputMode {
+        InputMode::CommandMode
     }
 
     fn handle_input_key(&mut self, key_code: KeyCode) {
@@ -111,11 +125,14 @@ impl Window for PopupWindow {
                 }
             },
             KeyCode::Enter => {
-                // Message is completed
-                // TODO: Send message back
+                self.message_input_finished = true;
             },
-            (_) =>{}
+            _ =>{}
         };
+    }
+
+    fn set_program_work_path(&mut self, program_work_path: PathBuf) {
+        // Nothing to do here
     }
 }
 
@@ -123,6 +140,8 @@ pub trait Window {
     fn display(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect);
     fn get_controls_description(&self) -> String;
     fn handle_input_key(&mut self, key_code: KeyCode);
+    fn get_input_mode(&self) -> InputMode;
+    fn set_program_work_path(&mut self, program_work_path: PathBuf);
     fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         let popup_layout = Layout::default()
             .direction(Direction::Vertical)
@@ -284,6 +303,17 @@ impl<'a> Window for ProjectWindow<'a> {
         String::from("a - Add project     d - Delete project     e - Edit Project Description     n - Edit Project name")
     }
 
+    fn get_input_mode(&self) -> InputMode {
+        match self.input_mode {
+            InputMode::CommandMode => {
+                InputMode::CommandMode
+            },
+            InputMode::WriteMode => {
+                InputMode::WriteMode
+            }
+        }
+    }
+
     fn handle_input_key(&mut self, key_code: KeyCode){
         match self.input_mode {
             InputMode::CommandMode => {
@@ -313,12 +343,22 @@ impl<'a> Window for ProjectWindow<'a> {
             },
             InputMode::WriteMode => {
                 self.project_input_popup.handle_input_key(key_code);
-                let pop_status = self.project_input_popup.is_message_inputed();
-                if pop_status.0 {
-                    // TODO: Insert new project with pop_status description
+                let popup_status = self.project_input_popup.is_message_inputted();
+                if popup_status.0 {
+                    // TODO:
+                    // - Add project to the provided path by the user.
+                    //      - handle path pass as parameter to the program
+                    //      - App struct must be able to pass param to the window so it can create the project
+                    //      - Create the project in the provided path
+
+                    self.input_mode = InputMode::CommandMode;
                 }
             }
         }
 
+    }
+
+    fn set_program_work_path(&mut self, program_work_path: PathBuf) {
+        // TODO: Implement
     }
 }

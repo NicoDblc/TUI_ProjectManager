@@ -15,10 +15,6 @@ enum Event<I> {
 }
 
 fn main() {
-    // let args: Vec<String> = std::env::args().collect();
-    // for a in args {
-    //     println!("{}", a);
-    // }
     utils::create_working_folder_if_not_exist();
     let (tx, rx) = mpsc::channel();
     let tick_rate = Duration::from_millis(250);

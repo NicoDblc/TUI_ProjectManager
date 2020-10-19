@@ -9,7 +9,7 @@ use tui::layout::{Constraint, Direction, Layout};
 use tui::text::Text;
 use tui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph};
 
-use crate::ui::{ProjectWindow, Window};
+use crate::ui::{ProjectWindow, Window, InputMode};
 use crate::utils;
 
 use std::io::Stdout;
@@ -104,16 +104,20 @@ impl<'a> Application<'a> {
 
     }
     pub fn handle_inputs(&mut self, key_code: KeyCode) {
-        if key_code == KeyCode::Char('q') {
-            self.quit();
-            return;
-        }
         match self.selected_window {
             SelectedWindow::Project => {
                 self.project_window.handle_input_key(key_code);
+                match self.project_window.get_input_mode() {
+                    InputMode::CommandMode => {
+                        if key_code == KeyCode::Char('q') {
+                            self.quit();
+                        }
+                    },
+                    _ => {}
+                }
             }
             SelectedWindow::Task => {
-
+                // TODO: Handle/crete task window
             }
         }
     }
@@ -172,7 +176,7 @@ pub struct Task {
 }
 
 impl Task {
-    fn new(task_description: String) -> Task {
+    pub fn new(task_description: String) -> Task {
         Task {
             description: task_description,
             time_spent: 0,
