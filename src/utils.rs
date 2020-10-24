@@ -2,7 +2,7 @@ pub static PROJECT_FILE_EXTENSION: &str = "pman";
 use std::ops::Add;
 use std::path::{Path, PathBuf};
 
-use crate::structure::{Project, TaskContainer, Task};
+use crate::structure::{Project, Task, TaskContainer};
 
 // TODO: Create working folder if it does not exist
 // TODO: Get working folder
@@ -67,11 +67,13 @@ fn create_dummy_project_with_name(name: String) {
     p.description = p.name.clone().add(" description");
     p.add_task(name.clone().add("Jambalaya 1"));
     p.add_task(name.clone().add("Jambalaya 2"));
-    p.completed_tasks.push(Task::new(String::from("a completed task")));
+    p.completed_tasks
+        .push(Task::new(String::from("a completed task")));
     let project_string = serde_json::to_string(&p).unwrap();
     let work_folder = get_working_folder();
     std::fs::write(
         work_folder.join(name.add(".pman")).as_path(),
         project_string,
-    ).unwrap();
+    )
+    .unwrap();
 }

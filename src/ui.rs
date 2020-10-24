@@ -5,21 +5,22 @@ use std::io;
 use tui::backend::CrosstermBackend;
 use tui::{Frame, Terminal};
 
-use tui::layout::{Constraint, Direction, Layout, Rect, Alignment};
+use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use tui::text::Text;
-use tui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph, BorderType, Clear, Wrap};
+use tui::widgets::{Block, BorderType, Borders, Clear, List, ListItem, ListState, Paragraph, Wrap};
 
 use crate::structure::Project;
 use crate::utils;
-use std::io::Stdout;
+use crate::utils::{get_projects_in_path, get_working_folder};
+use crate::Event::Input;
+use crossterm::event::Event::Key;
 use crossterm::event::KeyCode;
 use serde_json;
-use crossterm::event::Event::Key;
-use crate::Event::Input;
-use tui::style::{Color, Style};
-use crate::utils::{get_working_folder, get_projects_in_path};
-use std::path::PathBuf;
+use std::io::Stdout;
 use std::ops::Add;
+use std::path::PathBuf;
+use std::ptr::null;
+use tui::style::{Color, Style};
 
 #[derive(Default)]
 struct DisplayList<T> {
@@ -31,6 +32,11 @@ pub enum InputMode {
     CommandMode,
     WriteMode,
 }
+
+// TODO: popup types:
+// - Information Popup (press enter to conitnue)
+// - Yes or no popup
+// - input popup
 
 impl<T> DisplayList<T> {
     fn next(&mut self) {
@@ -75,15 +81,69 @@ impl<T> DisplayList<T> {
     }
 }
 
-struct PopupWindow {
+struct PopupMessageWindow {
+    description: String,
+    is_done: bool,
+}
+
+impl PopupMessageWindow {
+    fn is_done(&self) -> bool {
+        self.is_done
+    }
+}
+
+impl Window for PopupMessageWindow {
+    fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
+        let popup_layout = self.centered_rect(50, 25, layout);
+        frame.render_widget(Clear, popup_layout);
+        let popup_block = Block::default().borders(Borders::ALL);
+        frame.render_widget(popup_block, popup_layout);
+        let main_popup_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Percentage(10), Constraint::Percentage(90)])
+            .split(popup_layout);
+        let description_paragraph =
+            Paragraph::new(Text::from(self.description.clone())).alignment(Alignment::Center);
+        frame.render_widget(description_paragraph, main_popup_layout[0]);
+        let block = Block::default().borders(Borders::ALL);
+        let ok_message = Paragraph::new(Text::from("Ok"))
+            .wrap(Wrap { trim: false })
+            .alignment(Alignment::Center)
+            .block(block);
+        frame.render_widget(ok_message, main_popup_layout[1]);
+    }
+
+    fn get_controls_description(&self) -> String {
+        String::from("Press enter to continue")
+    }
+
+    fn handle_input_key(&mut self, key_code: KeyCode) {
+        match key_code {
+            KeyCode::Enter => {
+                self.is_done = true;
+            }
+            _ => {}
+        }
+    }
+
+    fn get_input_mode(&self) -> InputMode {
+        InputMode::CommandMode
+    }
+
+    fn set_program_work_path(&mut self, program_work_path: PathBuf) {
+        // Nothing required
+    }
+}
+
+struct PopupInputWindow {
     description: String,
     input_string: String,
     message_input_finished: bool,
 }
 
-impl PopupWindow {
-    fn new(popup_description: String) -> PopupWindow {
-        PopupWindow {
+impl PopupInputWindow {
+    fn new(popup_description: String) -> PopupInputWindow {
+        PopupInputWindow {
             description: popup_description,
             input_string: String::new(),
             message_input_finished: false,
@@ -94,16 +154,22 @@ impl PopupWindow {
     }
 }
 
-impl Window for PopupWindow {
-    fn display(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
-        let popup_layout = <PopupWindow as Window>::centered_rect(50,25,layout);
+impl Window for PopupInputWindow {
+    fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
+        let popup_layout = self.centered_rect(50, 25, layout);
         frame.render_widget(Clear, popup_layout);
         let popup_block = Block::default().borders(Borders::ALL);
         frame.render_widget(popup_block, popup_layout);
-        let main_popup_layout = Layout::default().direction(Direction::Vertical).constraints([Constraint::Percentage(10),Constraint::Percentage(90)]).split(popup_layout);
-        let description_paragraph = Paragraph::new(Text::from(self.get_controls_description())).alignment(Alignment::Center);
+        let main_popup_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Percentage(10), Constraint::Percentage(90)])
+            .split(popup_layout);
+        let description_paragraph = Paragraph::new(Text::from(self.get_controls_description()))
+            .alignment(Alignment::Center);
         frame.render_widget(description_paragraph, main_popup_layout[0]);
-        let input_paragraph = Paragraph::new(Text::from(self.input_string.clone())).wrap(Wrap{trim:false}).alignment(Alignment::Center);
+        let input_paragraph = Paragraph::new(Text::from(self.input_string.clone()))
+            .wrap(Wrap { trim: false })
+            .alignment(Alignment::Center);
         frame.render_widget(input_paragraph, main_popup_layout[1]);
     }
 
@@ -119,16 +185,16 @@ impl Window for PopupWindow {
         match key_code {
             KeyCode::Char(char) => {
                 self.input_string.push(char);
-            },
+            }
             KeyCode::Backspace => {
                 if self.input_string.len() > 0 {
                     self.input_string.pop();
                 }
-            },
+            }
             KeyCode::Enter => {
                 self.message_input_finished = true;
-            },
-            _ =>{}
+            }
+            _ => {}
         };
     }
 
@@ -138,12 +204,12 @@ impl Window for PopupWindow {
 }
 
 pub trait Window {
-    fn display(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect);
+    fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect);
     fn get_controls_description(&self) -> String;
     fn handle_input_key(&mut self, key_code: KeyCode);
     fn get_input_mode(&self) -> InputMode;
     fn set_program_work_path(&mut self, program_work_path: PathBuf);
-    fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+    fn centered_rect(&self, percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         let popup_layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints(
@@ -152,7 +218,7 @@ pub trait Window {
                     Constraint::Percentage(percent_y),
                     Constraint::Percentage((100 - percent_y) / 2),
                 ]
-                    .as_ref(),
+                .as_ref(),
             )
             .split(r);
 
@@ -164,11 +230,10 @@ pub trait Window {
                     Constraint::Percentage(percent_x),
                     Constraint::Percentage((100 - percent_x) / 2),
                 ]
-                    .as_ref(),
+                .as_ref(),
             )
             .split(popup_layout[1])[1]
     }
-
 }
 
 pub struct ProjectWindow<'a> {
@@ -176,9 +241,10 @@ pub struct ProjectWindow<'a> {
     projects_to_display: DisplayList<Project>,
     selected_project_active_tasks: Vec<ListItem<'a>>,
     selected_project_completed_tasks: Vec<ListItem<'a>>,
-    project_input_popup: PopupWindow,
+    project_input_popup: PopupInputWindow,
     input_mode: InputMode,
     program_work_path: PathBuf,
+    popup_windows: Vec<Box<Window>>,
 }
 
 impl<'a> ProjectWindow<'a> {
@@ -187,9 +253,10 @@ impl<'a> ProjectWindow<'a> {
             projects_to_display: DisplayList::from(projects),
             selected_project_active_tasks: Vec::new(),
             selected_project_completed_tasks: Vec::new(),
-            project_input_popup: PopupWindow::new(String::from("Enter Project Name")),
+            project_input_popup: PopupInputWindow::new(String::from("Enter Project Name")),
             input_mode: InputMode::CommandMode,
             program_work_path: PathBuf::new(),
+            popup_windows: Vec::new(),
         };
         if project_window.projects_to_display.array.len() > 0 {
             project_window.update_project_selection();
@@ -222,6 +289,10 @@ impl<'a> ProjectWindow<'a> {
 
     fn add_project_request(&mut self) {
         self.input_mode = InputMode::WriteMode;
+        self.popup_windows
+            .push(Box::new(PopupInputWindow::new(String::from(
+                "Insert project name",
+            ))));
         // TODO: popup to add name and description to project
     }
 
@@ -239,7 +310,7 @@ impl<'a> ProjectWindow<'a> {
 }
 
 impl<'a> Window for ProjectWindow<'a> {
-    fn display(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
+    fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
         let main_layout = Layout::default()
             .direction(Direction::Horizontal)
             .margin(1)
@@ -270,7 +341,7 @@ impl<'a> Window for ProjectWindow<'a> {
         frame.render_stateful_widget(
             p_list,
             project_layout[0],
-            &mut self.projects_to_display.state,
+            &mut self.projects_to_display.state.clone(),
         );
 
         let block = Block::default()
@@ -302,7 +373,9 @@ impl<'a> Window for ProjectWindow<'a> {
             List::new(self.selected_project_completed_tasks.clone()).block(block);
         frame.render_widget(completed_tasks_list, task_layout[1]);
         if let InputMode::WriteMode = self.input_mode {
-            self.project_input_popup.display(frame, layout);
+            for mut popup in &self.popup_windows {
+                popup.display(frame, layout);
+            }
         }
     }
 
@@ -312,62 +385,61 @@ impl<'a> Window for ProjectWindow<'a> {
 
     fn get_input_mode(&self) -> InputMode {
         match self.input_mode {
-            InputMode::CommandMode => {
-                InputMode::CommandMode
-            },
-            InputMode::WriteMode => {
-                InputMode::WriteMode
-            }
+            InputMode::CommandMode => InputMode::CommandMode,
+            InputMode::WriteMode => InputMode::WriteMode,
         }
     }
 
-    fn handle_input_key(&mut self, key_code: KeyCode){
+    fn handle_input_key(&mut self, key_code: KeyCode) {
         match self.input_mode {
-            InputMode::CommandMode => {
-                match key_code {
-                    KeyCode::Up => {
-                        self.projects_to_display.previous();
-                        self.update_project_selection();
-                    }
-                    KeyCode::Down => {
-                        self.projects_to_display.next();
-                        self.update_project_selection();
-                    }
-                    KeyCode::Char('a') => {
-                        self.add_project_request();
-                    }
-                    KeyCode::Char('d') => {
-                        self.delete_selected_project();
-                    }
-                    KeyCode::Char('e') => {
-                        self.edit_selected_project_description();
-                    }
-                    KeyCode::Char('n') => {
-                        self.edit_selected_project_name();
-                    }
-                    _ => {}
+            InputMode::CommandMode => match key_code {
+                KeyCode::Up => {
+                    self.projects_to_display.previous();
+                    self.update_project_selection();
                 }
+                KeyCode::Down => {
+                    self.projects_to_display.next();
+                    self.update_project_selection();
+                }
+                KeyCode::Char('a') => {
+                    self.add_project_request();
+                }
+                KeyCode::Char('d') => {
+                    self.delete_selected_project();
+                }
+                KeyCode::Char('e') => {
+                    self.edit_selected_project_description();
+                }
+                KeyCode::Char('n') => {
+                    self.edit_selected_project_name();
+                }
+                _ => {}
             },
             InputMode::WriteMode => {
-                self.project_input_popup.handle_input_key(key_code);
+                // TODO: handle whatever popup has been created
+                for mut popup in &self.popup_windows {
+                    popup.handle_input_key(key_code); // fails because type cannot be borrowed as mutable.
+                                                      // Cast the popup into the appropriate popup type to get the data wanted
+                }
                 let popup_status = self.project_input_popup.is_message_inputted();
                 if popup_status.0 {
-                    // create new project with provided message
-                    // reload the DisplayList
                     let new_project = Project::new(popup_status.1.clone());
-                    let project_string = match serde_json::to_string(&new_project){
-                        Ok(p_string) => {p_string},
-                        Err(e) => {println!("Error while creating project: {}",e); return;} // TODO: Replace with a popup
+                    let project_string = match serde_json::to_string(&new_project) {
+                        Ok(p_string) => p_string,
+                        Err(e) => {
+                            println!("Error while creating project: {}", e);
+                            return;
+                        } // TODO: Replace with a popup
                     };
                     let mut project_file_path = self.program_work_path.join(new_project.name);
                     project_file_path.set_extension(utils::PROJECT_FILE_EXTENSION);
-                    std::fs::write(project_file_path,project_string).unwrap();
-                    self.projects_to_display = DisplayList::from(get_projects_in_path(self.program_work_path.clone()));
+                    std::fs::write(project_file_path, project_string).unwrap();
+                    self.projects_to_display =
+                        DisplayList::from(get_projects_in_path(self.program_work_path.clone()));
                     self.input_mode = InputMode::CommandMode;
                 }
             }
         }
-
     }
 
     fn set_program_work_path(&mut self, new_program_work_path: PathBuf) {

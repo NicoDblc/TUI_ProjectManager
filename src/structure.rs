@@ -9,18 +9,18 @@ use tui::layout::{Constraint, Direction, Layout};
 use tui::text::Text;
 use tui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph};
 
-use crate::ui::{ProjectWindow, Window, InputMode};
+use crate::ui::{InputMode, ProjectWindow, Window};
 use crate::utils;
 
-use std::io::Stdout;
-use crossterm::event::KeyCode;
 use crossterm::event::Event::Key;
-use std::ptr::eq;
+use crossterm::event::KeyCode;
+use std::io::Stdout;
 use std::ops::Add;
+use std::ptr::eq;
 
 enum SelectedWindow {
     Project,
-    Task
+    Task,
 }
 
 pub struct Application<'a> {
@@ -28,12 +28,12 @@ pub struct Application<'a> {
     active_folder_path: std::path::PathBuf,
     project_window: ProjectWindow<'a>,
     pub is_running: bool,
-    selected_window: SelectedWindow
+    selected_window: SelectedWindow,
 }
 
 impl<'a> Application<'a> {
     pub fn new(path: std::path::PathBuf) -> Application<'a> {
-        let serialized_projects= utils::get_projects_in_path(path.clone());
+        let serialized_projects = utils::get_projects_in_path(path.clone());
         let stdout = io::stdout();
         let backend = CrosstermBackend::new(stdout);
         let mut b_terminal = Terminal::new(backend).unwrap();
@@ -55,11 +55,19 @@ impl<'a> Application<'a> {
             .draw(|f| {
                 let window_layout = Layout::default()
                     .direction(Direction::Vertical)
-                    .constraints([Constraint::Percentage(5), Constraint::Percentage(90), Constraint::Percentage(5)].as_ref())
+                    .constraints(
+                        [
+                            Constraint::Percentage(5),
+                            Constraint::Percentage(90),
+                            Constraint::Percentage(5),
+                        ]
+                        .as_ref(),
+                    )
                     .split(f.size());
                 let current_project_path = Paragraph::new(text_active_path);
                 f.render_widget(current_project_path, window_layout[0]);
-                let controls_string = String::from("q - quit     ").add(project_window_ref.get_controls_description().as_str());
+                let controls_string = String::from("q - quit     ")
+                    .add(project_window_ref.get_controls_description().as_str());
                 let controls_para = Paragraph::new(Text::from(controls_string));
                 f.render_widget(controls_para, window_layout[2]);
                 project_window_ref.display(f, window_layout[1]);
@@ -73,12 +81,11 @@ impl<'a> Application<'a> {
         match self.selected_window {
             SelectedWindow::Project => {
                 self.display_main_window();
-            },
+            }
             SelectedWindow::Task => {
                 self.display_tasks_window();
             }
         }
-
     }
     pub fn handle_inputs(&mut self, key_code: KeyCode) {
         match self.selected_window {
@@ -89,7 +96,7 @@ impl<'a> Application<'a> {
                         if key_code == KeyCode::Char('q') {
                             self.quit();
                         }
-                    },
+                    }
                     _ => {}
                 }
             }

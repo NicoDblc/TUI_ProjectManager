@@ -43,7 +43,7 @@ fn main() {
         app.update();
         match rx.recv().unwrap() {
             Event::Input(event) => match event.code {
-                _ => {app.handle_inputs(event.code)}
+                _ => app.handle_inputs(event.code),
             },
             Event::Tick => {}
         }
