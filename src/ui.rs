@@ -33,6 +33,27 @@ pub enum InputMode {
     WriteMode,
 }
 
+// Seperate:
+    // Trait: Renderable
+    // Trait: InputReturn // A type that returns information
+
+trait Renderable {
+    fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect);
+}
+
+trait InputReceptor {
+    fn handle_input_key(&mut self, key_code: KeyCode);
+    fn get_controls_description(&self) -> String;
+    fn get_input_mode(&self) -> InputMode;
+}
+
+trait InputReturn {
+    fn is_input_finished(&self) -> bool;
+    fn get_input_data(&self) -> String;
+}
+
+
+
 // TODO: popup types:
 // - Information Popup (press enter to conitnue)
 // - Yes or no popup
@@ -89,6 +110,47 @@ struct PopupMessageWindow {
 impl PopupMessageWindow {
     fn is_done(&self) -> bool {
         self.is_done
+    }
+}
+
+impl Renderable for PopupMessageWindow {
+    fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
+        let popup_layout = self.centered_rect(50, 25, layout);
+        frame.render_widget(Clear, popup_layout);
+        let popup_block = Block::default().borders(Borders::ALL);
+        frame.render_widget(popup_block, popup_layout);
+        let main_popup_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Percentage(10), Constraint::Percentage(90)])
+            .split(popup_layout);
+        let description_paragraph =
+            Paragraph::new(Text::from(self.description.clone())).alignment(Alignment::Center);
+        frame.render_widget(description_paragraph, main_popup_layout[0]);
+        let block = Block::default().borders(Borders::ALL);
+        let ok_message = Paragraph::new(Text::from("Ok"))
+            .wrap(Wrap { trim: false })
+            .alignment(Alignment::Center)
+            .block(block);
+        frame.render_widget(ok_message, main_popup_layout[1]);
+    }
+}
+
+impl InputReceptor for PopupMessageWindow {
+    fn get_controls_description(&self) -> String {
+        String::from("Press enter to continue")
+    }
+
+    fn handle_input_key(&mut self, key_code: KeyCode) {
+        match key_code {
+            KeyCode::Enter => {
+                self.is_done = true;
+            }
+            _ => {}
+        }
+    }
+
+    fn get_input_mode(&self) -> InputMode {
+        InputMode::CommandMode
     }
 }
 
@@ -149,6 +211,7 @@ impl PopupInputWindow {
             message_input_finished: false,
         }
     }
+
     fn is_message_inputted(&self) -> (bool, String) {
         (self.message_input_finished, self.input_string.clone())
     }
@@ -417,30 +480,35 @@ impl<'a> Window for ProjectWindow<'a> {
             },
             InputMode::WriteMode => {
                 // TODO: handle whatever popup has been created
-                for mut popup in &self.popup_windows {
+                for mut popup in &mut self.popup_windows {
                     popup.handle_input_key(key_code); // fails because type cannot be borrowed as mutable.
-                                                      // Cast the popup into the appropriate popup type to get the data wanted
-                }
-                let popup_status = self.project_input_popup.is_message_inputted();
-                if popup_status.0 {
-                    let new_project = Project::new(popup_status.1.clone());
-                    let project_string = match serde_json::to_string(&new_project) {
-                        Ok(p_string) => p_string,
-                        Err(e) => {
-                            println!("Error while creating project: {}", e);
-                            return;
-                        } // TODO: Replace with a popup
-                    };
-                    let mut project_file_path = self.program_work_path.join(new_project.name);
-                    project_file_path.set_extension(utils::PROJECT_FILE_EXTENSION);
-                    std::fs::write(project_file_path, project_string).unwrap();
-                    self.projects_to_display =
-                        DisplayList::from(get_projects_in_path(self.program_work_path.clone()));
-                    self.input_mode = InputMode::CommandMode;
+                    // Cast the popup into the appropriate popup type to get the data wanted
+                    // Refactoring types
+                    if key_code == KeyCode::Enter {
+                        // let mut a = popup as PopupInputWindow;
+                    }
                 }
             }
         }
-    }
+                let popup_status = self.project_input_popup.is_message_inputted();
+                if popup_status.0 {
+                let new_project = Project::new(popup_status.1.clone());
+                let project_string = match serde_json::to_string(&new_project) {
+                    Ok(p_string) => p_string,
+                    Err(e) => {
+                        println!("Error while creating project: {}", e);
+                        return;
+                    } // TODO: Replace with a popup
+                };
+                let mut project_file_path = self.program_work_path.join(new_project.name);
+                project_file_path.set_extension(utils::PROJECT_FILE_EXTENSION);
+                std::fs::write(project_file_path, project_string).unwrap();
+                self.projects_to_display =
+                    DisplayList::from(get_projects_in_path(self.program_work_path.clone()));
+                self.input_mode = InputMode::CommandMode;
+            }
+        }
+
 
     fn set_program_work_path(&mut self, new_program_work_path: PathBuf) {
         self.program_work_path = new_program_work_path;
