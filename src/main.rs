@@ -8,6 +8,7 @@ use std::{
 
 mod ui;
 mod utils;
+mod services;
 
 enum Event<I> {
     Input(I),

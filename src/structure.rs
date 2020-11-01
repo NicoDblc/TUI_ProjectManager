@@ -9,14 +9,16 @@ use tui::layout::{Constraint, Direction, Layout};
 use tui::text::Text;
 use tui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph};
 
-use crate::ui::{InputMode, ProjectWindow, Window};
+use crate::ui::{InputMode, InputReceptor, Drawable};
 use crate::utils;
 
 use crossterm::event::Event::Key;
 use crossterm::event::KeyCode;
 use std::io::Stdout;
 use std::ops::Add;
-use std::ptr::eq;
+//use std::ptr::eq;
+use crate::services::ProjectManagementService;
+use crate::services::Service;
 
 enum SelectedWindow {
     Project,
@@ -26,7 +28,7 @@ enum SelectedWindow {
 pub struct Application<'a> {
     terminal: tui::Terminal<CrosstermBackend<io::Stdout>>,
     active_folder_path: std::path::PathBuf,
-    project_window: ProjectWindow<'a>,
+    project_window: ProjectManagementService<'a>,
     pub is_running: bool,
     selected_window: SelectedWindow,
 }
@@ -38,8 +40,8 @@ impl<'a> Application<'a> {
         let backend = CrosstermBackend::new(stdout);
         let mut b_terminal = Terminal::new(backend).unwrap();
         b_terminal.clear().unwrap();
-        let mut app_project_window = ProjectWindow::new(serialized_projects);
-        app_project_window.set_program_work_path(path.clone());
+        let mut app_project_window = ProjectManagementService::new(serialized_projects);
+        app_project_window.set_working_directory(path.clone());
         Application {
             terminal: b_terminal,
             active_folder_path: path,
