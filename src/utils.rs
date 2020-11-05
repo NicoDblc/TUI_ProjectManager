@@ -27,6 +27,12 @@ pub fn get_working_folder() -> PathBuf {
     home_path.join(Path::new(folder_path.as_str()))
 }
 
+pub fn delete_project_of_name(project_name: String, working_path: PathBuf) {
+    let mut path = working_path.join(project_name);
+    path.set_extension(PROJECT_FILE_EXTENSION);
+    std::fs::remove_file(path.as_path());
+}
+
 pub fn get_projects_in_path(path: PathBuf) -> Vec<Project> {
     let mut serialized_projects: Vec<Project> = vec![];
     let folder_result = std::fs::read_dir(path.as_path()).unwrap();

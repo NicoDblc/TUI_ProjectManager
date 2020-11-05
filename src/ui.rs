@@ -206,6 +206,103 @@ impl InputReceptor for PopupMessageWindow {
     }
 }
 
+// PopupBinaryChoice
+
+#[derive(Default)]
+pub struct PopupBinaryChoice {
+    choice_message: String,
+    current_choice: bool,
+    is_completed: bool,
+    is_active: bool,
+}
+
+impl PopupBinaryChoice {
+    pub fn new(message: String) -> PopupBinaryChoice {
+        PopupBinaryChoice {
+            choice_message: message,
+            current_choice: false,
+            is_completed: false,
+            is_active: true,
+        }
+    }
+
+    pub fn get_choice(&self) -> bool {
+        self.current_choice
+    }
+}
+
+impl InputReceptor for PopupBinaryChoice {
+    fn handle_input_key(&mut self, key_code: KeyCode) {
+        match key_code {
+            KeyCode::Left => self.current_choice = true,
+            KeyCode::Right => self.current_choice = false,
+            KeyCode::Enter => self.is_completed = true,
+            _ => {},
+        }
+    }
+
+    fn get_controls_description(&self) -> String {
+        String::from("<-: Go Left  |  ->: Go Right  |  Enter: Confirm Selection ")
+    }
+
+    fn get_input_mode(&self) -> InputMode {
+        InputMode::CommandMode
+    }
+}
+
+impl Completable for PopupBinaryChoice {
+    fn is_completed(&self) -> bool {
+        self.is_completed
+    }
+
+    fn reset_completion(&mut self) {
+        self.is_completed = false;
+    }
+
+    fn is_active(&self) -> bool {
+        self.is_active
+    }
+
+    fn set_active(&mut self, new_active: bool) {
+        self.is_active = new_active;
+    }
+}
+
+impl Drawable for PopupBinaryChoice {
+    fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
+        let popup_layout = self.centered_rect(50, 20, layout);
+        frame.render_widget(Clear, popup_layout);
+        let main_split = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(popup_layout);
+        let popup_block = Block::default().borders(Borders::ALL);
+        frame.render_widget(popup_block, popup_layout);
+        let message_paragraph = Paragraph::new(Text::from(self.choice_message.clone()))
+            .alignment(Alignment::Center)
+            .wrap(Wrap{trim:false});
+        frame.render_widget(message_paragraph, main_split[0]);
+        let choice_layout = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(main_split[1]);
+        let choice_block = Block::default()
+            .borders(Borders::ALL)
+            .border_type(BorderType::Thick);
+        let mut yes_paragraph = Paragraph::new(Text::from("Yes"))
+            .alignment(Alignment::Center);
+        let mut no_paragraph = Paragraph::new(Text::from("No"))
+            .alignment(Alignment::Center);
+        if self.current_choice {
+            yes_paragraph = yes_paragraph.block(choice_block);
+        } else {
+            no_paragraph = no_paragraph.block(choice_block);
+        }
+        frame.render_widget(yes_paragraph, choice_layout[0]);
+        frame.render_widget(no_paragraph, choice_layout[1]);
+    }
+}
+
 // PopupInputWindow ---------------- Todo: refactor into another file (use module folders)
 
 #[derive(Default)]

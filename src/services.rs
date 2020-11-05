@@ -3,14 +3,14 @@ use crate::{ui, utils};
 use crate::structure;
 use crate::structure::Project;
 use tui::widgets::{ListItem, Block, List, Borders, Paragraph};
-use crate::ui::{InputMode, InputReceptor, Drawable, DisplayList, PopupInputWindow, InputReturn, PopupMessageWindow, Completable};
+use crate::ui::{InputMode, InputReceptor, Drawable, DisplayList, PopupInputWindow, InputReturn, PopupMessageWindow, Completable, PopupBinaryChoice};
 use tui::backend::CrosstermBackend;
 use tui::Frame;
 use tui::text::Text;
 use std::io::{Stdout, Error};
 use tui::layout::{Rect, Layout, Direction, Constraint};
 use crossterm::event::KeyCode;
-use crate::utils::get_projects_in_path;
+use crate::utils::{get_projects_in_path, delete_project_of_name};
 use std::ops::Add;
 use crate::Event::Input;
 
@@ -30,6 +30,7 @@ pub struct ProjectManagementService<'a> {
     input_mode: InputMode,
     program_work_path: PathBuf,
     message_popup: PopupMessageWindow,
+    delete_project_popup: PopupBinaryChoice,
 }
 
 impl<'a> ProjectManagementService<'a> {
@@ -42,6 +43,7 @@ impl<'a> ProjectManagementService<'a> {
             input_mode: InputMode::CommandMode,
             program_work_path: PathBuf::new(),
             message_popup: PopupMessageWindow::default(),
+            delete_project_popup: PopupBinaryChoice::default(),
         };
         if project_window.projects_to_display.array.len() > 0 {
             project_window.update_project_selection();
@@ -81,8 +83,12 @@ impl<'a> ProjectManagementService<'a> {
     }
 
     fn delete_selected_project(&mut self) {
-        // TODO: delete selected project
-        // new popup type: Yes or no popup
+        if self.projects_to_display.array.len() > 0 {
+            let popup_description = String::from("Delete project: ")
+                .add(self.get_selected_project_name().as_str());
+            self.delete_project_popup = PopupBinaryChoice::new(popup_description);
+            self.input_mode = InputMode::WriteMode;
+        }
     }
 
     fn edit_selected_project_name(&mut self) {
@@ -93,6 +99,11 @@ impl<'a> ProjectManagementService<'a> {
     fn edit_selected_project_description(&mut self) {
         // TODO: Implement (with pop up)
         // New popup same type asm input
+    }
+
+    fn get_selected_project_name(&self) -> String {
+        self.projects_to_display
+            .array[self.projects_to_display.state.selected().unwrap()].clone().name
     }
 }
 
@@ -128,9 +139,17 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                     if self.message_popup.is_completed() {
                         self.message_popup.set_active(false);
                     }
-                }
-                else if self.project_input_popup.is_active() {
+                } else if self.project_input_popup.is_active() {
                     self.project_input_popup.handle_input_key(key_code);
+                } else if self.delete_project_popup.is_active() {
+                    self.delete_project_popup.handle_input_key(key_code);
+                    if self.delete_project_popup.is_completed() {
+                        if self.delete_project_popup.get_choice() {
+                            utils::delete_project_of_name(self.get_selected_project_name(), self.program_work_path.clone());
+                            self.update_projects(utils::get_projects_in_path(self.program_work_path.clone()));
+                        }
+                        self.delete_project_popup.set_active(false);
+                    }
                 }
                 else {
                     self.input_mode = InputMode::CommandMode;
@@ -242,6 +261,9 @@ impl<'a> Drawable for ProjectManagementService<'a> {
         frame.render_widget(completed_tasks_list, task_layout[1]);
         if self.project_input_popup.is_active() {
             self.project_input_popup.display(frame, layout);
+        }
+        if self.delete_project_popup.is_active() {
+            self.delete_project_popup.display(frame, layout);
         }
         if self.message_popup.is_active() {
             self.message_popup.display(frame, layout);
