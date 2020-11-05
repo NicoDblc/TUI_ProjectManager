@@ -173,10 +173,12 @@ impl Drawable for PopupMessageWindow {
         frame.render_widget(popup_block, popup_layout);
         let main_popup_layout = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Percentage(10), Constraint::Percentage(90)])
+            .constraints([Constraint::Percentage(80), Constraint::Percentage(20)])
             .split(popup_layout);
+        let block = Block::default().borders(Borders::ALL);
         let description_paragraph =
-            Paragraph::new(Text::from(self.description.clone())).alignment(Alignment::Center);
+            Paragraph::new(Text::from(self.description.clone()))
+                .alignment(Alignment::Center).block(block).wrap(Wrap{trim:false});
         frame.render_widget(description_paragraph, main_popup_layout[0]);
         let block = Block::default().borders(Borders::ALL);
         let ok_message = Paragraph::new(Text::from("Ok"))
@@ -278,25 +280,32 @@ impl Drawable for PopupBinaryChoice {
             .split(popup_layout);
         let popup_block = Block::default().borders(Borders::ALL);
         frame.render_widget(popup_block, popup_layout);
+        let message_block = Block::default().borders(Borders::ALL);
         let message_paragraph = Paragraph::new(Text::from(self.choice_message.clone()))
             .alignment(Alignment::Center)
-            .wrap(Wrap{trim:false});
+            .wrap(Wrap{trim:false})
+            .block(message_block);
         frame.render_widget(message_paragraph, main_split[0]);
         let choice_layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
             .split(main_split[1]);
+        let normal_block = Block::default()
+            .borders(Borders::ALL);
         let choice_block = Block::default()
             .borders(Borders::ALL)
-            .border_type(BorderType::Thick);
+            .border_type(BorderType::Thick)
+            .style(Style::default().fg(Color::Red));
         let mut yes_paragraph = Paragraph::new(Text::from("Yes"))
             .alignment(Alignment::Center);
         let mut no_paragraph = Paragraph::new(Text::from("No"))
             .alignment(Alignment::Center);
         if self.current_choice {
             yes_paragraph = yes_paragraph.block(choice_block);
+            no_paragraph = no_paragraph.block(normal_block);
         } else {
             no_paragraph = no_paragraph.block(choice_block);
+            yes_paragraph = yes_paragraph.block(normal_block);
         }
         frame.render_widget(yes_paragraph, choice_layout[0]);
         frame.render_widget(no_paragraph, choice_layout[1]);
