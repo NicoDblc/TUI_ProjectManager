@@ -137,6 +137,8 @@ pub struct PopupMessageWindow {
     is_done: bool,
 }
 
+// PopupMessageWindow
+
 impl PopupMessageWindow {
     pub fn new(popup_message: String) -> PopupMessageWindow {
         PopupMessageWindow{
@@ -278,8 +280,8 @@ impl Drawable for PopupBinaryChoice {
             .direction(Direction::Vertical)
             .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
             .split(popup_layout);
-        let popup_block = Block::default().borders(Borders::ALL);
-        frame.render_widget(popup_block, popup_layout);
+        // let popup_block = Block::default().borders(Borders::ALL);
+        // frame.render_widget(popup_block, layout);
         let message_block = Block::default().borders(Borders::ALL);
         let message_paragraph = Paragraph::new(Text::from(self.choice_message.clone()))
             .alignment(Alignment::Center)
