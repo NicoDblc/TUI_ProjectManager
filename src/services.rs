@@ -4,8 +4,8 @@ use crate::ui::{
     Completable, DisplayList, Drawable, InputMode, InputReceptor, InputReturn, PopupBinaryChoice,
     PopupInputWindow, PopupMessageWindow,
 };
-use crate::utils::get_projects_in_path;
 use crate::utils;
+use crate::utils::get_projects_in_path;
 use crossterm::event::KeyCode;
 use std::io::{Error, Stdout};
 use std::ops::Add;
@@ -104,12 +104,9 @@ impl<'a> ProjectManagementService<'a> {
         let mut project_file_path = self.program_work_path.join(project_to_write.name);
         project_file_path.set_extension(utils::PROJECT_FILE_EXTENSION);
         match std::fs::write(project_file_path, project_string) {
-            Ok(()) => {}
-            Err(e) => {
-                return Result::Err(e);
-            }
-        };
-        Ok(())
+            Ok(()) => Ok(()),
+            Err(e) => Result::Err(e),
+        }
     }
 
     fn delete_selected_project(&mut self) {
@@ -196,8 +193,8 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                             match utils::delete_project_of_name(
                                 self.get_selected_project_name(),
                                 self.program_work_path.clone(),
-                            ){
-                                Ok(()) => {},
+                            ) {
+                                Ok(()) => {}
                                 Err(e) => {
                                     self.create_popup_with_message(e.to_string());
                                 }
@@ -289,7 +286,14 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
     }
 
     fn get_controls_description(&self) -> String {
-        String::from("a - Add project     d - Delete project     e - Edit Project Description     n - Edit Project name")
+        if self.message_popup.is_active() {
+            return self.message_popup.get_controls_description();
+        } else if self.delete_project_popup.is_active() {
+            return self.delete_project_popup.get_controls_description();
+        } else if self.project_input_popup.is_active() {
+            return self.project_input_popup.get_controls_description();
+        }
+        String::from("q - Quit     a - Add project     d - Delete project     e - Edit Project Description     n - Edit Project name")
     }
 
     fn get_input_mode(&self) -> InputMode {

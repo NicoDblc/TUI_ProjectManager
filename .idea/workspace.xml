@@ -27,7 +27,6 @@
   <component name="ChangeListManager">
     <list default="true" id="dfde29e1-6ab3-430e-8399-b174564982e3" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/services.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/services.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/structure.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/structure.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ui.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ui.rs" afterDir="false" />
@@ -107,30 +106,30 @@
       <screen x="0" y="0" width="2560" height="1410" />
     </state>
     <state x="994" y="516" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog/0.0.2560.1410@0.0.2560.1410" timestamp="1602536774808" />
-    <state width="1054" height="1282" key="GridCell.Tab.0.bottom" timestamp="1604818086744">
+    <state width="1054" height="1282" key="GridCell.Tab.0.bottom" timestamp="1604818831097">
       <screen x="0" y="0" width="2560" height="1410" />
     </state>
     <state width="1671" height="315" key="GridCell.Tab.0.bottom/0.0.1714.1113@0.0.1714.1113" timestamp="1604796307534" />
     <state width="1278" height="1352" key="GridCell.Tab.0.bottom/0.0.2560.1410/2560.0.1280.689@0.0.2560.1410" timestamp="1602397291128" />
-    <state width="1054" height="1282" key="GridCell.Tab.0.bottom/0.0.2560.1410@0.0.2560.1410" timestamp="1604818086744" />
-    <state width="1054" height="1282" key="GridCell.Tab.0.center" timestamp="1604818086744">
+    <state width="1054" height="1282" key="GridCell.Tab.0.bottom/0.0.2560.1410@0.0.2560.1410" timestamp="1604818831097" />
+    <state width="1054" height="1282" key="GridCell.Tab.0.center" timestamp="1604818831097">
       <screen x="0" y="0" width="2560" height="1410" />
     </state>
     <state width="1671" height="315" key="GridCell.Tab.0.center/0.0.1714.1113@0.0.1714.1113" timestamp="1604796307534" />
     <state width="1278" height="1352" key="GridCell.Tab.0.center/0.0.2560.1410/2560.0.1280.689@0.0.2560.1410" timestamp="1602397291128" />
-    <state width="1054" height="1282" key="GridCell.Tab.0.center/0.0.2560.1410@0.0.2560.1410" timestamp="1604818086744" />
-    <state width="1054" height="1282" key="GridCell.Tab.0.left" timestamp="1604818086744">
+    <state width="1054" height="1282" key="GridCell.Tab.0.center/0.0.2560.1410@0.0.2560.1410" timestamp="1604818831097" />
+    <state width="1054" height="1282" key="GridCell.Tab.0.left" timestamp="1604818831097">
       <screen x="0" y="0" width="2560" height="1410" />
     </state>
     <state width="1671" height="315" key="GridCell.Tab.0.left/0.0.1714.1113@0.0.1714.1113" timestamp="1604796307534" />
     <state width="1278" height="1352" key="GridCell.Tab.0.left/0.0.2560.1410/2560.0.1280.689@0.0.2560.1410" timestamp="1602397291128" />
-    <state width="1054" height="1282" key="GridCell.Tab.0.left/0.0.2560.1410@0.0.2560.1410" timestamp="1604818086744" />
-    <state width="1054" height="1282" key="GridCell.Tab.0.right" timestamp="1604818086744">
+    <state width="1054" height="1282" key="GridCell.Tab.0.left/0.0.2560.1410@0.0.2560.1410" timestamp="1604818831097" />
+    <state width="1054" height="1282" key="GridCell.Tab.0.right" timestamp="1604818831097">
       <screen x="0" y="0" width="2560" height="1410" />
     </state>
     <state width="1671" height="315" key="GridCell.Tab.0.right/0.0.1714.1113@0.0.1714.1113" timestamp="1604796307534" />
     <state width="1278" height="1352" key="GridCell.Tab.0.right/0.0.2560.1410/2560.0.1280.689@0.0.2560.1410" timestamp="1602397291128" />
-    <state width="1054" height="1282" key="GridCell.Tab.0.right/0.0.2560.1410@0.0.2560.1410" timestamp="1604818086744" />
+    <state width="1054" height="1282" key="GridCell.Tab.0.right/0.0.2560.1410@0.0.2560.1410" timestamp="1604818831097" />
     <state x="794" y="453" width="540" height="524" key="StructurePopup" timestamp="1602362711538">
       <screen x="0" y="0" width="2560" height="1410" />
     </state>

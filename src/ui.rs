@@ -386,7 +386,7 @@ impl InputReceptor for PopupInputWindow {
     }
 
     fn get_controls_description(&self) -> String {
-        String::from(self.description.clone())
+        String::from("esc - Cancel | Enter - Confirm entry")
     }
 
     fn get_input_mode(&self) -> InputMode {

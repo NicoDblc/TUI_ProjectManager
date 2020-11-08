@@ -5,9 +5,6 @@ use std::path::{Path, PathBuf};
 use crate::structure::{Project, Task, TaskContainer};
 use std::io::Error;
 
-// TODO: Create working folder if it does not exist
-// TODO: Get working folder
-
 pub fn create_working_folder_if_not_exist() {
     let working_folder = get_working_folder();
     if !working_folder.exists() {
@@ -21,19 +18,18 @@ pub fn create_working_folder_if_not_exist() {
 }
 
 pub fn get_working_folder() -> PathBuf {
-    // TODO: check if program was oppened in a specific directory
-
+    // TODO: check if program was opened in a specific directory
     let home_path = dirs::home_dir().unwrap();
     let folder_path = String::from('.').add(PROJECT_FILE_EXTENSION);
     home_path.join(Path::new(folder_path.as_str()))
 }
 
-pub fn delete_project_of_name(project_name: String, working_path: PathBuf) -> Result<(), Error>{
+pub fn delete_project_of_name(project_name: String, working_path: PathBuf) -> Result<(), Error> {
     let mut path = working_path.join(project_name);
     path.set_extension(PROJECT_FILE_EXTENSION);
     match std::fs::remove_file(path.as_path()) {
-        Ok(()) =>  Ok(()),
-        Err(e) =>  Result::Err(e),
+        Ok(()) => Ok(()),
+        Err(e) => Result::Err(e),
     }
 }
 

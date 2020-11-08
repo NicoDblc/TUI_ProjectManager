@@ -12,10 +12,9 @@ use tui::widgets::Paragraph;
 use crate::ui::{Drawable, InputMode, InputReceptor};
 use crate::utils;
 
-use crossterm::event::KeyCode;
-use std::ops::Add;
 use crate::services::ProjectManagementService;
 use crate::services::Service;
+use crossterm::event::KeyCode;
 
 enum SelectedWindow {
     Project,
@@ -65,8 +64,8 @@ impl<'a> Application<'a> {
                     .split(f.size());
                 let current_project_path = Paragraph::new(text_active_path);
                 f.render_widget(current_project_path, window_layout[0]);
-                let controls_string = String::from("q - quit     ")
-                    .add(project_window_ref.get_controls_description().as_str());
+                let controls_string =
+                    String::from(project_window_ref.get_controls_description().as_str());
                 let controls_para = Paragraph::new(Text::from(controls_string));
                 f.render_widget(controls_para, window_layout[2]);
                 project_window_ref.display(f, window_layout[1]);
@@ -106,9 +105,9 @@ impl<'a> Application<'a> {
     }
     pub fn quit(&mut self) {
         self.is_running = false;
-        match self.terminal.flush(){
+        match self.terminal.flush() {
             Err(e) => println!("Error when exiting program: {}", e),
-            _ => {},
+            _ => {}
         };
     }
 }
