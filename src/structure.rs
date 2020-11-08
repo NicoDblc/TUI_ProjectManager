@@ -3,20 +3,17 @@ use serde::Serialize;
 
 use std::io;
 use tui::backend::CrosstermBackend;
-use tui::{Frame, Terminal};
+use tui::Terminal;
 
 use tui::layout::{Constraint, Direction, Layout};
 use tui::text::Text;
-use tui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph};
+use tui::widgets::Paragraph;
 
-use crate::ui::{InputMode, InputReceptor, Drawable};
+use crate::ui::{Drawable, InputMode, InputReceptor};
 use crate::utils;
 
-use crossterm::event::Event::Key;
 use crossterm::event::KeyCode;
-use std::io::Stdout;
 use std::ops::Add;
-//use std::ptr::eq;
 use crate::services::ProjectManagementService;
 use crate::services::Service;
 
@@ -109,7 +106,10 @@ impl<'a> Application<'a> {
     }
     pub fn quit(&mut self) {
         self.is_running = false;
-        self.terminal.flush();
+        match self.terminal.flush(){
+            Err(e) => println!("Error when exiting program: {}", e),
+            _ => {},
+        };
     }
 }
 

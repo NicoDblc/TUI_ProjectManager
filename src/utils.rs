@@ -3,6 +3,7 @@ use std::ops::Add;
 use std::path::{Path, PathBuf};
 
 use crate::structure::{Project, Task, TaskContainer};
+use std::io::Error;
 
 // TODO: Create working folder if it does not exist
 // TODO: Get working folder
@@ -27,10 +28,13 @@ pub fn get_working_folder() -> PathBuf {
     home_path.join(Path::new(folder_path.as_str()))
 }
 
-pub fn delete_project_of_name(project_name: String, working_path: PathBuf) {
+pub fn delete_project_of_name(project_name: String, working_path: PathBuf) -> Result<(), Error>{
     let mut path = working_path.join(project_name);
     path.set_extension(PROJECT_FILE_EXTENSION);
-    std::fs::remove_file(path.as_path());
+    match std::fs::remove_file(path.as_path()) {
+        Ok(()) =>  Ok(()),
+        Err(e) =>  Result::Err(e),
+    }
 }
 
 pub fn get_projects_in_path(path: PathBuf) -> Vec<Project> {

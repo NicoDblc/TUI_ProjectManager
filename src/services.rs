@@ -1,20 +1,20 @@
-use std::path::{Path, PathBuf};
-use crate::{ui, utils};
-use crate::structure;
+use crate::services::ProjectInputType::ProjectAdd;
 use crate::structure::Project;
-use tui::widgets::{ListItem, Block, List, Borders, Paragraph};
-use crate::ui::{InputMode, InputReceptor, Drawable, DisplayList, PopupInputWindow, InputReturn, PopupMessageWindow, Completable, PopupBinaryChoice};
-use tui::backend::CrosstermBackend;
-use tui::Frame;
-use tui::text::Text;
-use std::io::{Stdout, Error};
-use tui::layout::{Rect, Layout, Direction, Constraint};
+use crate::ui::{
+    Completable, DisplayList, Drawable, InputMode, InputReceptor, InputReturn, PopupBinaryChoice,
+    PopupInputWindow, PopupMessageWindow,
+};
+use crate::utils::get_projects_in_path;
+use crate::utils;
 use crossterm::event::KeyCode;
-use crate::utils::{get_projects_in_path, delete_project_of_name};
+use std::io::{Error, Stdout};
 use std::ops::Add;
-use crate::Event::Input;
-use crate::services::ProjectInputType::{ProjectAdd};
-
+use std::path::PathBuf;
+use tui::backend::CrosstermBackend;
+use tui::layout::{Constraint, Direction, Layout, Rect};
+use tui::text::Text;
+use tui::widgets::{Block, Borders, List, ListItem, Paragraph};
+use tui::Frame;
 
 pub trait Service {
     fn set_working_directory(&mut self, path: PathBuf);
@@ -67,23 +67,21 @@ impl<'a> ProjectManagementService<'a> {
         self.update_projects(utils::get_projects_in_path(self.program_work_path.clone()));
     }
 
-    fn next_project_selection(&mut self) {}
-
     fn update_project_selection(&mut self) {
         self.selected_project_active_tasks = self.projects_to_display.array
             [self.projects_to_display.state.selected().unwrap()]
-            .active_tasks
-            .clone()
-            .into_iter()
-            .map(|a| ListItem::new(Text::from(a.description)))
-            .collect();
+        .active_tasks
+        .clone()
+        .into_iter()
+        .map(|a| ListItem::new(Text::from(a.description)))
+        .collect();
         self.selected_project_completed_tasks = self.projects_to_display.array
             [self.projects_to_display.state.selected().unwrap()]
-            .completed_tasks
-            .clone()
-            .into_iter()
-            .map(|a| ListItem::new(Text::from(a.description)))
-            .collect();
+        .completed_tasks
+        .clone()
+        .into_iter()
+        .map(|a| ListItem::new(Text::from(a.description)))
+        .collect();
     }
 
     fn create_popup_with_message(&mut self, message: String) {
@@ -93,9 +91,7 @@ impl<'a> ProjectManagementService<'a> {
     fn add_project_request(&mut self) {
         self.input_mode = InputMode::WriteMode;
         self.input_type = ProjectInputType::ProjectAdd;
-        self.project_input_popup = PopupInputWindow::new(String::from(
-            "Insert project name",
-        ));
+        self.project_input_popup = PopupInputWindow::new(String::from("Insert project name"));
     }
 
     fn write_project_to_disk(&self, project_to_write: Project) -> Result<(), Error> {
@@ -108,7 +104,7 @@ impl<'a> ProjectManagementService<'a> {
         let mut project_file_path = self.program_work_path.join(project_to_write.name);
         project_file_path.set_extension(utils::PROJECT_FILE_EXTENSION);
         match std::fs::write(project_file_path, project_string) {
-            Ok(()) => {},
+            Ok(()) => {}
             Err(e) => {
                 return Result::Err(e);
             }
@@ -118,8 +114,8 @@ impl<'a> ProjectManagementService<'a> {
 
     fn delete_selected_project(&mut self) {
         if self.projects_to_display.array.len() > 0 {
-            let popup_description = String::from("Delete project: ")
-                .add(self.get_selected_project_name().as_str());
+            let popup_description =
+                String::from("Delete project: ").add(self.get_selected_project_name().as_str());
             self.delete_project_popup = PopupBinaryChoice::new(popup_description);
             self.input_mode = InputMode::WriteMode;
         }
@@ -130,7 +126,11 @@ impl<'a> ProjectManagementService<'a> {
             self.input_mode = InputMode::WriteMode;
             self.input_type = ProjectInputType::ProjectNameEdit;
             self.project_input_popup = PopupInputWindow::new(String::from("Edit project name"));
-            self.project_input_popup.set_input_string(self.projects_to_display.array[self.projects_to_display.state.selected().unwrap()].name.clone());
+            self.project_input_popup.set_input_string(
+                self.projects_to_display.array[self.projects_to_display.state.selected().unwrap()]
+                    .name
+                    .clone(),
+            );
         }
     }
 
@@ -138,14 +138,20 @@ impl<'a> ProjectManagementService<'a> {
         if self.projects_to_display.array.len() > 0 {
             self.input_mode = InputMode::WriteMode;
             self.input_type = ProjectInputType::ProjectDescriptionEdit;
-            self.project_input_popup = PopupInputWindow::new(String::from("Edit project description"));
-            self.project_input_popup.set_input_string(self.projects_to_display.array[self.projects_to_display.state.selected().unwrap()].description.clone());
+            self.project_input_popup =
+                PopupInputWindow::new(String::from("Edit project description"));
+            self.project_input_popup.set_input_string(
+                self.projects_to_display.array[self.projects_to_display.state.selected().unwrap()]
+                    .description
+                    .clone(),
+            );
         }
     }
 
     fn get_selected_project_name(&self) -> String {
-        self.projects_to_display
-            .array[self.projects_to_display.state.selected().unwrap()].clone().name
+        self.projects_to_display.array[self.projects_to_display.state.selected().unwrap()]
+            .clone()
+            .name
     }
 }
 
@@ -187,13 +193,22 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                     self.delete_project_popup.handle_input_key(key_code);
                     if self.delete_project_popup.is_completed() {
                         if self.delete_project_popup.get_choice() {
-                            utils::delete_project_of_name(self.get_selected_project_name(), self.program_work_path.clone());
-                            self.update_projects(utils::get_projects_in_path(self.program_work_path.clone()));
+                            match utils::delete_project_of_name(
+                                self.get_selected_project_name(),
+                                self.program_work_path.clone(),
+                            ){
+                                Ok(()) => {},
+                                Err(e) => {
+                                    self.create_popup_with_message(e.to_string());
+                                }
+                            };
+                            self.update_projects(utils::get_projects_in_path(
+                                self.program_work_path.clone(),
+                            ));
                         }
                         self.delete_project_popup.set_active(false);
                     }
-                }
-                else {
+                } else {
                     self.input_mode = InputMode::CommandMode;
                     self.handle_input_key(key_code);
                 }
@@ -207,30 +222,34 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                     match self.write_project_to_disk(new_project) {
                         Ok(_) => {
                             self.project_input_popup.set_active(false);
-                            self.update_projects(get_projects_in_path(self.program_work_path.clone()));
+                            self.update_projects(get_projects_in_path(
+                                self.program_work_path.clone(),
+                            ));
                             self.input_mode = InputMode::CommandMode;
-                        },
+                        }
                         Err(e) => {
                             self.create_popup_with_message(e.to_string());
                             self.project_input_popup.reset_completion();
                             return;
                         }
                     };
-                },
+                }
                 ProjectInputType::ProjectNameEdit => {
-                    let mut project = self.projects_to_display
-                        .array[self.projects_to_display.state.selected().unwrap()].clone();
-                    let mut original_path = self.program_work_path.clone()
-                        .join(project.name);
+                    let mut project = self.projects_to_display.array
+                        [self.projects_to_display.state.selected().unwrap()]
+                    .clone();
+                    let mut original_path = self.program_work_path.clone().join(project.name);
                     original_path.set_extension(utils::PROJECT_FILE_EXTENSION);
-                    let mut new_path = self.program_work_path.clone()
+                    let mut new_path = self
+                        .program_work_path
+                        .clone()
                         .join(self.project_input_popup.get_input_data());
                     new_path.set_extension(utils::PROJECT_FILE_EXTENSION);
                     project.name = self.project_input_popup.get_input_data();
                     match std::fs::rename(original_path, new_path) {
-                        Ok(T) => {
-                            match self.write_project_to_disk(project){
-                                Ok(()) => {},
+                        Ok(()) => {
+                            match self.write_project_to_disk(project) {
+                                Ok(()) => {}
                                 Err(e) => {
                                     self.create_popup_with_message(e.to_string());
                                     self.project_input_popup.reset_completion();
@@ -246,17 +265,18 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                             return;
                         }
                     }
-                },
+                }
                 ProjectInputType::ProjectDescriptionEdit => {
-                    let mut project = self.projects_to_display
-                        .array[self.projects_to_display.state.selected().unwrap()].clone();
+                    let mut project = self.projects_to_display.array
+                        [self.projects_to_display.state.selected().unwrap()]
+                    .clone();
                     let new_description = self.project_input_popup.get_input_data();
                     project.description = new_description;
-                    match self.write_project_to_disk(project){
+                    match self.write_project_to_disk(project) {
                         Ok(_) => {
                             self.reload_projects();
                             self.project_input_popup.set_active(false);
-                        },
+                        }
                         Err(e) => {
                             self.create_popup_with_message(e.to_string());
                             self.project_input_popup.reset_completion();
@@ -265,7 +285,6 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                     };
                 }
             };
-
         }
     }
 
@@ -303,13 +322,13 @@ impl<'a> Drawable for ProjectManagementService<'a> {
                 .map(|p| ListItem::new(Text::from(p.name)))
                 .collect(),
         )
-            .block(block)
-            .highlight_style(
-                tui::style::Style::default()
-                    .bg(tui::style::Color::Green)
-                    .add_modifier(tui::style::Modifier::BOLD),
-            )
-            .highlight_symbol("-> ");
+        .block(block)
+        .highlight_style(
+            tui::style::Style::default()
+                .bg(tui::style::Color::Green)
+                .add_modifier(tui::style::Modifier::BOLD),
+        )
+        .highlight_symbol("-> ");
         frame.render_stateful_widget(
             p_list,
             project_layout[0],
@@ -325,7 +344,7 @@ impl<'a> Drawable for ProjectManagementService<'a> {
                     .clone()
                     .description,
             )
-                .block(block),
+            .block(block),
             false => Paragraph::new("").block(block),
         };
         frame.render_widget(p_description, project_layout[1]);

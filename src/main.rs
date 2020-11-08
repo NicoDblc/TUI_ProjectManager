@@ -1,14 +1,14 @@
 mod structure;
-use crossterm::event::{self, Event as CEvent, KeyCode};
+use crossterm::event::{self, Event as CEvent};
 use std::{
     sync::mpsc,
     thread,
     time::{Duration, Instant},
 };
 
+mod services;
 mod ui;
 mod utils;
-mod services;
 
 enum Event<I> {
     Input(I),
