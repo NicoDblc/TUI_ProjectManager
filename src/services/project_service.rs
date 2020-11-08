@@ -1,10 +1,9 @@
-use crate::services::ProjectInputType::ProjectAdd;
 use crate::structure::Project;
 use crate::ui::{
     Completable, DisplayList, Drawable, InputMode, InputReceptor, InputReturn, PopupBinaryChoice,
     PopupInputWindow, PopupMessageWindow,
 };
-use crate::utils;
+use crate::{utils, services};
 use crate::utils::get_projects_in_path;
 use crossterm::event::KeyCode;
 use std::io::{Error, Stdout};
@@ -15,10 +14,6 @@ use tui::layout::{Constraint, Direction, Layout, Rect};
 use tui::text::Text;
 use tui::widgets::{Block, Borders, List, ListItem, Paragraph};
 use tui::Frame;
-
-pub trait Service {
-    fn set_working_directory(&mut self, path: PathBuf);
-}
 
 enum ProjectInputType {
     ProjectAdd,
@@ -47,7 +42,7 @@ impl<'a> ProjectManagementService<'a> {
             selected_project_completed_tasks: Vec::new(),
             project_input_popup: PopupInputWindow::default(),
             input_mode: InputMode::CommandMode,
-            input_type: ProjectAdd,
+            input_type: ProjectInputType::ProjectAdd,
             program_work_path: PathBuf::new(),
             message_popup: PopupMessageWindow::default(),
             delete_project_popup: PopupBinaryChoice::default(),
@@ -379,7 +374,7 @@ impl<'a> Drawable for ProjectManagementService<'a> {
     }
 }
 
-impl<'a> Service for ProjectManagementService<'a> {
+impl<'a> services::Service for ProjectManagementService<'a> {
     fn set_working_directory(&mut self, path: PathBuf) {
         self.program_work_path = path;
     }

@@ -12,9 +12,9 @@ use tui::widgets::Paragraph;
 use crate::ui::{Drawable, InputMode, InputReceptor};
 use crate::utils;
 
-use crate::services::ProjectManagementService;
-use crate::services::Service;
+use crate::services::project_service::ProjectManagementService;
 use crossterm::event::KeyCode;
+use crate::services::Service;
 
 enum SelectedWindow {
     Project,
@@ -72,9 +72,11 @@ impl<'a> Application<'a> {
             })
             .unwrap();
     }
+
     fn display_tasks_window(&mut self) {
         // TODO: Implement
     }
+
     pub fn update(&mut self) {
         match self.selected_window {
             SelectedWindow::Project => {
