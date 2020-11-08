@@ -13,13 +13,18 @@ use crossterm::event::KeyCode;
 use crate::utils::{get_projects_in_path, delete_project_of_name};
 use std::ops::Add;
 use crate::Event::Input;
+use crate::services::ProjectInputType::{project_add, ProjectAdd};
 
 
 pub trait Service {
     fn set_working_directory(&mut self, path: PathBuf);
-
 }
 
+enum ProjectInputType {
+    ProjectAdd,
+    ProjectDescriptionEdit,
+    ProjectNameEdit,
+}
 
 pub struct ProjectManagementService<'a> {
     // Everything that is contained in the draw call for the main window
@@ -28,6 +33,7 @@ pub struct ProjectManagementService<'a> {
     selected_project_completed_tasks: Vec<ListItem<'a>>,
     project_input_popup: PopupInputWindow,
     input_mode: InputMode,
+    input_type: ProjectInputType,
     program_work_path: PathBuf,
     message_popup: PopupMessageWindow,
     delete_project_popup: PopupBinaryChoice,
@@ -41,6 +47,7 @@ impl<'a> ProjectManagementService<'a> {
             selected_project_completed_tasks: Vec::new(),
             project_input_popup: PopupInputWindow::default(),
             input_mode: InputMode::CommandMode,
+            input_type: ProjectAdd,
             program_work_path: PathBuf::new(),
             message_popup: PopupMessageWindow::default(),
             delete_project_popup: PopupBinaryChoice::default(),
@@ -77,6 +84,7 @@ impl<'a> ProjectManagementService<'a> {
 
     fn add_project_request(&mut self) {
         self.input_mode = InputMode::WriteMode;
+        self.input_type = ProjectInputType::ProjectAdd;
         self.project_input_popup = PopupInputWindow::new(String::from(
             "Insert project name",
         ));
@@ -93,11 +101,17 @@ impl<'a> ProjectManagementService<'a> {
 
     fn edit_selected_project_name(&mut self) {
         // TODO: Implement (with pop up)
+        self.input_mode = InputMode::WriteMode;
+        self.input_type = ProjectInputType::ProjectNameEdit;
+        self.project_input_popup = PopupInputWindow::new(String::from("Edit project name"));
         // New popup same type as input
     }
 
     fn edit_selected_project_description(&mut self) {
         // TODO: Implement (with pop up)
+        self.input_mode = InputMode::WriteMode;
+        self.input_type = ProjectInputType::ProjectDescriptionEdit;
+        self.project_input_popup = PopupInputWindow::new(String::from("Edit project description"));
         // New popup same type asm input
     }
 
@@ -159,28 +173,39 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
         }
 
         if self.project_input_popup.is_active() & self.project_input_popup.is_completed() {
-            let new_project = Project::new(self.project_input_popup.get_input_data());
-            let project_string = match serde_json::to_string(&new_project) {
-                Ok(p_string) => p_string,
-                Err(e) => {
-                    self.message_popup = PopupMessageWindow::new(String::from("Error: ").add(e.to_string().as_str()));
-                    return;
-                }
-            };
-            let mut project_file_path = self.program_work_path.join(new_project.name);
-            project_file_path.set_extension(utils::PROJECT_FILE_EXTENSION);
-            match std::fs::write(project_file_path, project_string){
-                Ok(_) => {
-                    self.project_input_popup.set_active(false);
-                    self.update_projects(get_projects_in_path(self.program_work_path.clone()));
-                    self.input_mode = InputMode::CommandMode;
+            match self.input_type {
+                ProjectInputType::ProjectAdd => {
+                    let new_project = Project::new(self.project_input_popup.get_input_data());
+                    let project_string = match serde_json::to_string(&new_project) {
+                        Ok(p_string) => p_string,
+                        Err(e) => {
+                            self.message_popup = PopupMessageWindow::new(String::from("Error: ").add(e.to_string().as_str()));
+                            return;
+                        }
+                    };
+                    let mut project_file_path = self.program_work_path.join(new_project.name);
+                    project_file_path.set_extension(utils::PROJECT_FILE_EXTENSION);
+                    match std::fs::write(project_file_path, project_string){
+                        Ok(_) => {
+                            self.project_input_popup.set_active(false);
+                            self.update_projects(get_projects_in_path(self.program_work_path.clone()));
+                            self.input_mode = InputMode::CommandMode;
+                        },
+                        Err(e) => {
+                            self.message_popup = PopupMessageWindow::new(String::from("Error: ").add(e.to_string().as_str()));
+                            self.project_input_popup.reset_completion();
+                            return;
+                        }
+                    };
                 },
-                Err(e) => {
-                    self.message_popup = PopupMessageWindow::new(String::from("Error: ").add(e.to_string().as_str()));
-                    self.project_input_popup.reset_completion();
-                    return;
+                ProjectInputType::ProjectNameEdit => {
+                    // TODO: Implement
+                },
+                ProjectInputType::ProjectDescriptionEdit => {
+                    // TODO: Implement
                 }
             };
+
         }
     }
 
