@@ -83,10 +83,6 @@ pub trait Completable {
     fn set_active(&mut self, new_active: bool);
 }
 
-
-// TODO: popup types:
-// - Yes or no popup
-
 impl<T> DisplayList<T> {
     pub(crate) fn next(&mut self) {
         let i = match self.state.selected() {
@@ -343,9 +339,9 @@ impl Drawable for PopupInputWindow {
         frame.render_widget(popup_block, popup_layout);
         let main_popup_layout = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Percentage(10), Constraint::Percentage(90)])
+            .constraints([Constraint::Percentage(20), Constraint::Percentage(80)])
             .split(popup_layout);
-        let description_paragraph = Paragraph::new(Text::from(self.get_controls_description()))
+        let description_paragraph = Paragraph::new(Text::from(self.description.clone()))
             .alignment(Alignment::Center);
         frame.render_widget(description_paragraph, main_popup_layout[0]);
         let input_paragraph = Paragraph::new(Text::from(self.input_string.clone()))
