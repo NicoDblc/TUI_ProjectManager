@@ -329,6 +329,10 @@ impl PopupInputWindow {
             message_input_finished: false,
         }
     }
+
+    pub fn set_input_string(&mut self, new_input_string: String) {
+        self.input_string = new_input_string;
+    }
 }
 
 impl Drawable for PopupInputWindow {

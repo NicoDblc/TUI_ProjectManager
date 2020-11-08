@@ -13,7 +13,7 @@ use crossterm::event::KeyCode;
 use crate::utils::{get_projects_in_path, delete_project_of_name};
 use std::ops::Add;
 use crate::Event::Input;
-use crate::services::ProjectInputType::{project_add, ProjectAdd};
+use crate::services::ProjectInputType::{ProjectAdd};
 
 
 pub trait Service {
@@ -63,6 +63,10 @@ impl<'a> ProjectManagementService<'a> {
         self.projects_to_display = DisplayList::from(projects);
     }
 
+    fn reload_projects(&mut self) {
+        self.update_projects(utils::get_projects_in_path(self.program_work_path.clone()));
+    }
+
     fn next_project_selection(&mut self) {}
 
     fn update_project_selection(&mut self) {
@@ -82,12 +86,34 @@ impl<'a> ProjectManagementService<'a> {
             .collect();
     }
 
+    fn create_popup_with_message(&mut self, message: String) {
+        self.message_popup = PopupMessageWindow::new(message);
+    }
+
     fn add_project_request(&mut self) {
         self.input_mode = InputMode::WriteMode;
         self.input_type = ProjectInputType::ProjectAdd;
         self.project_input_popup = PopupInputWindow::new(String::from(
             "Insert project name",
         ));
+    }
+
+    fn write_project_to_disk(&self, project_to_write: Project) -> Result<(), Error> {
+        let project_string = match serde_json::to_string(&project_to_write) {
+            Ok(p_string) => p_string,
+            Err(e) => {
+                return Result::Err(Error::from(e));
+            }
+        };
+        let mut project_file_path = self.program_work_path.join(project_to_write.name);
+        project_file_path.set_extension(utils::PROJECT_FILE_EXTENSION);
+        match std::fs::write(project_file_path, project_string) {
+            Ok(()) => {},
+            Err(e) => {
+                return Result::Err(e);
+            }
+        };
+        Ok(())
     }
 
     fn delete_selected_project(&mut self) {
@@ -100,19 +126,21 @@ impl<'a> ProjectManagementService<'a> {
     }
 
     fn edit_selected_project_name(&mut self) {
-        // TODO: Implement (with pop up)
-        self.input_mode = InputMode::WriteMode;
-        self.input_type = ProjectInputType::ProjectNameEdit;
-        self.project_input_popup = PopupInputWindow::new(String::from("Edit project name"));
-        // New popup same type as input
+        if self.projects_to_display.array.len() > 0 {
+            self.input_mode = InputMode::WriteMode;
+            self.input_type = ProjectInputType::ProjectNameEdit;
+            self.project_input_popup = PopupInputWindow::new(String::from("Edit project name"));
+            self.project_input_popup.set_input_string(self.projects_to_display.array[self.projects_to_display.state.selected().unwrap()].name.clone());
+        }
     }
 
     fn edit_selected_project_description(&mut self) {
-        // TODO: Implement (with pop up)
-        self.input_mode = InputMode::WriteMode;
-        self.input_type = ProjectInputType::ProjectDescriptionEdit;
-        self.project_input_popup = PopupInputWindow::new(String::from("Edit project description"));
-        // New popup same type asm input
+        if self.projects_to_display.array.len() > 0 {
+            self.input_mode = InputMode::WriteMode;
+            self.input_type = ProjectInputType::ProjectDescriptionEdit;
+            self.project_input_popup = PopupInputWindow::new(String::from("Edit project description"));
+            self.project_input_popup.set_input_string(self.projects_to_display.array[self.projects_to_display.state.selected().unwrap()].description.clone());
+        }
     }
 
     fn get_selected_project_name(&self) -> String {
@@ -176,33 +204,65 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
             match self.input_type {
                 ProjectInputType::ProjectAdd => {
                     let new_project = Project::new(self.project_input_popup.get_input_data());
-                    let project_string = match serde_json::to_string(&new_project) {
-                        Ok(p_string) => p_string,
-                        Err(e) => {
-                            self.message_popup = PopupMessageWindow::new(String::from("Error: ").add(e.to_string().as_str()));
-                            return;
-                        }
-                    };
-                    let mut project_file_path = self.program_work_path.join(new_project.name);
-                    project_file_path.set_extension(utils::PROJECT_FILE_EXTENSION);
-                    match std::fs::write(project_file_path, project_string){
+                    match self.write_project_to_disk(new_project) {
                         Ok(_) => {
                             self.project_input_popup.set_active(false);
                             self.update_projects(get_projects_in_path(self.program_work_path.clone()));
                             self.input_mode = InputMode::CommandMode;
                         },
                         Err(e) => {
-                            self.message_popup = PopupMessageWindow::new(String::from("Error: ").add(e.to_string().as_str()));
+                            self.create_popup_with_message(e.to_string());
                             self.project_input_popup.reset_completion();
                             return;
                         }
                     };
                 },
                 ProjectInputType::ProjectNameEdit => {
-                    // TODO: Implement
+                    let mut project = self.projects_to_display
+                        .array[self.projects_to_display.state.selected().unwrap()].clone();
+                    let mut original_path = self.program_work_path.clone()
+                        .join(project.name);
+                    original_path.set_extension(utils::PROJECT_FILE_EXTENSION);
+                    let mut new_path = self.program_work_path.clone()
+                        .join(self.project_input_popup.get_input_data());
+                    new_path.set_extension(utils::PROJECT_FILE_EXTENSION);
+                    project.name = self.project_input_popup.get_input_data();
+                    match std::fs::rename(original_path, new_path) {
+                        Ok(T) => {
+                            match self.write_project_to_disk(project){
+                                Ok(()) => {},
+                                Err(e) => {
+                                    self.create_popup_with_message(e.to_string());
+                                    self.project_input_popup.reset_completion();
+                                    return;
+                                }
+                            };
+                            self.reload_projects();
+                            self.project_input_popup.set_active(false);
+                        }
+                        Err(e) => {
+                            self.create_popup_with_message(e.to_string());
+                            self.project_input_popup.reset_completion();
+                            return;
+                        }
+                    }
                 },
                 ProjectInputType::ProjectDescriptionEdit => {
-                    // TODO: Implement
+                    let mut project = self.projects_to_display
+                        .array[self.projects_to_display.state.selected().unwrap()].clone();
+                    let new_description = self.project_input_popup.get_input_data();
+                    project.description = new_description;
+                    match self.write_project_to_disk(project){
+                        Ok(_) => {
+                            self.reload_projects();
+                            self.project_input_popup.set_active(false);
+                        },
+                        Err(e) => {
+                            self.create_popup_with_message(e.to_string());
+                            self.project_input_popup.reset_completion();
+                            return;
+                        }
+                    };
                 }
             };
 
