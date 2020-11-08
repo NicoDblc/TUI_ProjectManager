@@ -20,10 +20,6 @@ pub enum InputMode {
     WriteMode,
 }
 
-// Seperate:
-// Trait: Renderable
-// Trait: InputReturn // A type that returns information
-
 pub trait Drawable {
     fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect);
     fn centered_rect(&self, percent_x: u16, percent_y: u16, r: Rect) -> Rect {
@@ -294,8 +290,6 @@ impl Drawable for PopupBinaryChoice {
         frame.render_widget(no_paragraph, choice_layout[1]);
     }
 }
-
-// PopupInputWindow ---------------- Todo: refactor into another file (use module folders)
 
 #[derive(Default)]
 pub struct PopupInputWindow {

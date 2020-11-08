@@ -11,7 +11,7 @@ pub fn create_working_folder_if_not_exist() {
         match std::fs::create_dir(working_folder.as_path()) {
             Ok(_) => {}
             Err(e) => {
-                panic!("Error occured while create the working dir: {}", e);
+                panic!("Error occurred while create the working dir: {}", e);
             }
         };
     }
