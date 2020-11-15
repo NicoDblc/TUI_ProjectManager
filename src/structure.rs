@@ -13,8 +13,9 @@ use crate::ui::{Drawable, InputMode, InputReceptor};
 use crate::utils;
 
 use crate::services::project_service::ProjectManagementService;
-use crossterm::event::KeyCode;
 use crate::services::Service;
+use crossterm::event::KeyCode;
+use std::path::PathBuf;
 
 enum SelectedWindow {
     Project,
@@ -124,7 +125,7 @@ trait Completable {
 }
 
 pub trait TaskContainer {
-    fn add_task(&mut self, task_description: String);
+    fn add_task(&mut self, task_name: String, task_description: String);
 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]
@@ -135,6 +136,7 @@ pub struct Project {
     pub completed_tasks: Vec<Task>,
 }
 
+// TODO: implement the serialize + save
 impl Project {
     pub fn new(project_name: String) -> Project {
         Project {
@@ -144,17 +146,33 @@ impl Project {
             completed_tasks: vec![],
         }
     }
+
+    pub fn write_project_to_path(&self, path_for_project: PathBuf) -> Result<(),std::io::Error>{
+        let project_string = match serde_json::to_string(self) {
+            Ok(p_string) => p_string,
+            Err(e) => {
+                return Result::Err(std::io::Error::from(e));
+            }
+        };
+        let mut project_file_path = path_for_project.join(&self.name);
+        project_file_path.set_extension(utils::PROJECT_FILE_EXTENSION);
+        match std::fs::write(project_file_path, project_string) {
+            Ok(()) => Ok(()),
+            Err(e) => Result::Err(e),
+        }
+    }
 }
 
 impl TaskContainer for Project {
-    fn add_task(&mut self, task_description: String) {
-        let task = Task::new(task_description);
+    fn add_task(&mut self, task_name: String, task_description: String) {
+        let task = Task::new(task_name, task_description);
         self.active_tasks.push(task);
     }
 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]
 pub struct Task {
+    pub name: String,
     pub description: String,
     pub time_spent: i32,
     pub estimate: i32,
@@ -162,8 +180,9 @@ pub struct Task {
 }
 
 impl Task {
-    pub fn new(task_description: String) -> Task {
+    pub fn new(task_name: String, task_description: String) -> Task {
         Task {
+            name: task_name,
             description: task_description,
             time_spent: 0,
             estimate: 0,
@@ -183,9 +202,10 @@ impl InformationDisplay for Task {
 }
 
 impl TaskContainer for Task {
-    fn add_task(&mut self, task_desctiption: String) {
+    fn add_task(&mut self, task_name: String, tasK_description: String) {
         let task = Task {
-            description: task_desctiption,
+            name: task_name,
+            description: tasK_description,
             time_spent: 0,
             estimate: 0,
             sub_tasks: vec![],

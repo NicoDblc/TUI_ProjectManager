@@ -93,7 +93,9 @@ impl<T> DisplayList<T> {
             }
             None => 0,
         };
-        self.state.select(Some(i));
+        if self.array.len() > 0 {
+            self.state.select(Some(i));
+        }
     }
 
     pub fn from(content: Vec<T>) -> DisplayList<T> {

@@ -3,8 +3,8 @@ use crate::ui::{
     Completable, DisplayList, Drawable, InputMode, InputReceptor, InputReturn, PopupBinaryChoice,
     PopupInputWindow, PopupMessageWindow,
 };
-use crate::{utils, services};
 use crate::utils::get_projects_in_path;
+use crate::{services, utils};
 use crossterm::event::KeyCode;
 use std::io::{Error, Stdout};
 use std::ops::Add;
