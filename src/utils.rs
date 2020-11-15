@@ -71,10 +71,18 @@ fn create_dummy_project_with_name(name: String) {
     create_working_folder_if_not_exist();
     let mut p = Project::new(name.clone());
     p.description = p.name.clone().add(" description");
-    p.add_task(name.clone().add("Jambalaya 1"), String::from("Sample description"));
-    p.add_task(name.clone().add("Jambalaya 2"),String::from("Sample description"));
-    p.completed_tasks
-        .push(Task::new(String::from("a completed task"),String::from("Sample description")));
+    p.add_task(
+        name.clone().add("Jambalaya 1"),
+        String::from("Sample description"),
+    );
+    p.add_task(
+        name.clone().add("Jambalaya 2"),
+        String::from("Sample description"),
+    );
+    p.completed_tasks.push(Task::new(
+        String::from("a completed task"),
+        String::from("Sample description"),
+    ));
     let project_string = serde_json::to_string(&p).unwrap();
     let work_folder = get_working_folder();
     std::fs::write(

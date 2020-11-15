@@ -147,7 +147,7 @@ impl Project {
         }
     }
 
-    pub fn write_project_to_path(&self, path_for_project: PathBuf) -> Result<(),std::io::Error>{
+    pub fn write_project_to_path(&self, path_for_project: PathBuf) -> Result<(), std::io::Error> {
         let project_string = match serde_json::to_string(self) {
             Ok(p_string) => p_string,
             Err(e) => {

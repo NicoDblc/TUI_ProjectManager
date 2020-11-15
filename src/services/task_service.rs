@@ -1,21 +1,22 @@
+use crate::services::task_service::TaskInputChoice::{AddName, EditDescription};
 use crate::services::Service;
 use crate::structure::{Project, Task};
-use crate::ui::{DisplayList, Drawable, InputMode, InputReceptor};
+use crate::ui::InputMode::CommandMode;
+use crate::ui::PopupInputWindow;
+use crate::ui::{Completable, DisplayList, Drawable, InputMode, InputReceptor, InputReturn};
 use crossterm::event::KeyCode;
-use std::io::Stdout;
+use std::io::{Error, Stdout};
 use std::path::PathBuf;
 use tui::backend::CrosstermBackend;
 use tui::layout::Direction::{Horizontal, Vertical};
 use tui::layout::{Constraint, Layout, Rect};
+use tui::text::Text;
 use tui::widgets::{Block, Borders, List, ListItem};
 use tui::Frame;
-use tui::text::Text;
-use crate::ui::PopupInputWindow;
-use crate::services::task_service::TaskInputChoice::{AddName, EditDescription};
 
 enum TaskInputChoice {
     AddName,
-    EditDescription
+    EditDescription,
 }
 
 struct TaskService {
@@ -26,7 +27,7 @@ struct TaskService {
     focused_on_active: bool,
     input_mode: InputMode,
     input_popup: PopupInputWindow,
-    input_popup_type: TaskInputChoice
+    input_popup_type: TaskInputChoice,
 }
 
 impl TaskService {
@@ -38,18 +39,14 @@ impl TaskService {
 
     fn edit_task_description(&mut self) {
         let input_string = match self.focused_on_active {
-            true => {
-                match self.active_tasks_list.state.selected() {
-                    Some(val) => self.active_tasks_list.array[val].description.clone(),
-                    None => String::from("")
-                }
+            true => match self.active_tasks_list.state.selected() {
+                Some(val) => self.active_tasks_list.array[val].description.clone(),
+                None => String::from(""),
             },
-            false => {
-                match self.completed_tasks_list.state.selected() {
-                    Some(val) => self.completed_tasks_list.array[val].description.clone(),
-                    None => String::from(""),
-                }
-            }
+            false => match self.completed_tasks_list.state.selected() {
+                Some(val) => self.completed_tasks_list.array[val].description.clone(),
+                None => String::from(""),
+            },
         };
         self.input_popup_type = EditDescription;
         self.input_mode = InputMode::WriteMode;
@@ -60,30 +57,34 @@ impl TaskService {
     fn mark_selected_task_as_completed(&mut self) {
         match self.active_tasks_list.state.selected() {
             Some(val) => {
-                self.completed_tasks_list.array.push(self.active_tasks_list.array[val].clone());
+                self.completed_tasks_list
+                    .array
+                    .push(self.active_tasks_list.array[val].clone());
                 self.active_tasks_list.array.remove(val);
                 self.selected_project.active_tasks = self.active_tasks_list.array.clone();
                 self.selected_project.completed_tasks = self.completed_tasks_list.array.clone();
-                self.selected_project.write_project_to_path(self.working_path.clone());
-            },
-            None => { }
+                self.selected_project
+                    .write_project_to_path(self.working_path.clone());
+            }
+            None => {}
         }
     }
 
     fn mark_selected_task_as_uncompleted(&mut self) {
         match self.completed_tasks_list.state.selected() {
             Some(val) => {
-                self.active_tasks_list.array.push(self.completed_tasks_list.array[val].clone());
+                self.active_tasks_list
+                    .array
+                    .push(self.completed_tasks_list.array[val].clone());
                 self.completed_tasks_list.array.remove(val);
                 self.selected_project.completed_tasks = self.completed_tasks_list.array.clone();
                 self.selected_project.active_tasks = self.active_tasks_list.array.clone();
-                self.selected_project.write_project_to_path(self.working_path.clone());
-            },
+                self.selected_project
+                    .write_project_to_path(self.working_path.clone());
+            }
             None => {}
         }
     }
-
-
 }
 
 impl Service for TaskService {
@@ -93,6 +94,7 @@ impl Service for TaskService {
 }
 
 impl Drawable for TaskService {
+    // TODO: display the Popups
     fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
         let initial_layout = Layout::default()
             .direction(Vertical)
@@ -162,43 +164,70 @@ impl Drawable for TaskService {
 impl InputReceptor for TaskService {
     fn handle_input_key(&mut self, key_code: KeyCode) {
         //TODO: handle write mode
-        match key_code {
-            KeyCode::Left => {
-                self.focused_on_active = true;
+        match self.input_mode {
+            InputMode::CommandMode => match key_code {
+                KeyCode::Left => {
+                    self.focused_on_active = true;
+                }
+                KeyCode::Right => {
+                    self.focused_on_active = false;
+                }
+                KeyCode::Char('a') => {
+                    self.add_task_command();
+                }
+                KeyCode::Char('c') => {
+                    if self.focused_on_active {
+                        self.mark_selected_task_as_completed();
+                    }
+                }
+                KeyCode::Char('u') => {
+                    if !self.focused_on_active {
+                        self.mark_selected_task_as_uncompleted();
+                    }
+                }
+                KeyCode::Up => {
+                    if self.focused_on_active {
+                        self.active_tasks_list.previous();
+                    } else {
+                        self.completed_tasks_list.previous();
+                    }
+                }
+                KeyCode::Down => {
+                    if self.focused_on_active {
+                        self.active_tasks_list.next();
+                    } else {
+                        self.completed_tasks_list.next();
+                    }
+                }
+                _ => {}
             },
-            KeyCode::Right => {
-                self.focused_on_active = false;
+            InputMode::WriteMode => {
+                match key_code {
+                    _ => {
+                        self.input_popup.handle_input_key(key_code);
+                        if !self.input_popup.is_active() {
+                            self.input_mode = CommandMode;
+                            return;
+                        }
+                        if self.input_popup.is_completed() {
+                            match self.input_popup_type {
+                                AddName => {}
+                                EditDescription => match self.focused_on_active {
+                                    true => {
+
+
+                                        // Update project
+                                    }
+                                    false => {
+
+
+                                    }
+                                },
+                            }
+                        }
+                    }
+                };
             }
-            KeyCode::Char('a') => {
-                self.add_task_command();
-            }
-            KeyCode::Char('c') => {
-                if self.focused_on_active {
-                    self.mark_selected_task_as_completed();
-                }
-            }
-            KeyCode::Char('u') => {
-                if !self.focused_on_active {
-                    self.mark_selected_task_as_uncompleted();
-                }
-            }
-            KeyCode::Up => {
-                if self.focused_on_active {
-                    self.active_tasks_list.previous();
-                }
-                else {
-                    self.completed_tasks_list.previous();
-                }
-            },
-            KeyCode::Down => {
-                if self.focused_on_active {
-                    self.active_tasks_list.next();
-                }
-                else {
-                    self.completed_tasks_list.next();
-                }
-            }
-            _ => {}
         };
     }
 
