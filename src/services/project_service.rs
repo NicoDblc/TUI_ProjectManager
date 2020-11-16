@@ -37,7 +37,9 @@ pub struct ProjectManagementService<'a> {
 impl<'a> ProjectManagementService<'a> {
     pub fn new(working_path: PathBuf) -> ProjectManagementService<'a> {
         let mut project_window = ProjectManagementService {
-            projects_to_display: DisplayList::from(utils::get_projects_in_path(working_path.clone())),
+            projects_to_display: DisplayList::from(utils::get_projects_in_path(
+                working_path.clone(),
+            )),
             selected_project_active_tasks: Vec::new(),
             selected_project_completed_tasks: Vec::new(),
             project_input_popup: PopupInputWindow::default(),
@@ -149,10 +151,8 @@ impl<'a> ProjectManagementService<'a> {
 
     pub fn get_selected_project_path_name(&self) -> Option<String> {
         match self.projects_to_display.state.selected() {
-            Some(val) => {
-                Option::Some(self.projects_to_display.array[val].clone().name)
-            },
-            None => None
+            Some(val) => Option::Some(self.projects_to_display.array[val].clone().name),
+            None => None,
         }
     }
 }

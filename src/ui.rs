@@ -78,10 +78,9 @@ impl<T> DisplayList<T> {
                     } else {
                         i
                     }
-                }else {
+                } else {
                     0
                 }
-
             }
             None => 0,
         };

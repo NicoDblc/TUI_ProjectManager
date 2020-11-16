@@ -13,11 +13,11 @@ use crate::ui::{Drawable, InputMode, InputReceptor};
 use crate::utils;
 
 use crate::services::project_service::ProjectManagementService;
+use crate::services::task_service::TaskService;
 use crate::services::Service;
 use crossterm::event::KeyCode;
-use std::path::PathBuf;
-use crate::services::task_service::TaskService;
 use std::ops::Add;
+use std::path::PathBuf;
 
 enum SelectedWindow {
     Project,
@@ -40,7 +40,10 @@ impl<'a> Application<'a> {
         let mut b_terminal = Terminal::new(backend).unwrap();
         b_terminal.clear().unwrap();
         let mut app_project_window = ProjectManagementService::new(path.clone());
-        app_project_window.set_working_directory(path.clone().join(String::from(".").add(utils::PROJECT_FILE_EXTENSION)));
+        app_project_window.set_working_directory(
+            path.clone()
+                .join(String::from(".").add(utils::PROJECT_FILE_EXTENSION)),
+        );
         Application {
             terminal: b_terminal,
             active_folder_path: path,
@@ -78,8 +81,11 @@ impl<'a> Application<'a> {
     }
 
     fn display_tasks_window(&mut self) {
-        let project_name = self.project_window.get_selected_project_path_name().unwrap();
-        let mut project_path = self.active_folder_path.clone();//.with_file_name(project_name);
+        let project_name = self
+            .project_window
+            .get_selected_project_path_name()
+            .unwrap();
+        let mut project_path = self.active_folder_path.clone(); //.with_file_name(project_name);
         project_path = project_path.join(String::from(".").add(utils::PROJECT_FILE_EXTENSION));
         project_path = project_path.with_file_name(project_name);
         project_path.set_extension(utils::PROJECT_FILE_EXTENSION);
@@ -95,7 +101,7 @@ impl<'a> Application<'a> {
                             Constraint::Percentage(90),
                             Constraint::Percentage(5),
                         ]
-                            .as_ref(),
+                        .as_ref(),
                     )
                     .split(f.size());
                 let current_project_path = Paragraph::new(text_active_path);
@@ -113,16 +119,16 @@ impl<'a> Application<'a> {
         self.selected_window = new_window;
         match self.selected_window {
             SelectedWindow::Project => {
-                self.project_window = ProjectManagementService::new(self.active_folder_path.clone());
+                self.project_window =
+                    ProjectManagementService::new(self.active_folder_path.clone());
             }
             SelectedWindow::Task => {
                 match self.project_window.get_selected_project_path_name() {
                     Some(project_name) => {
-                        self.task_window = TaskService::new(self.active_folder_path.clone(), project_name)
-                    },
-                    None => {
-                        self.selected_window = SelectedWindow::Project
+                        self.task_window =
+                            TaskService::new(self.active_folder_path.clone(), project_name)
                     }
+                    None => self.selected_window = SelectedWindow::Project,
                 };
             }
         }
@@ -143,26 +149,22 @@ impl<'a> Application<'a> {
             SelectedWindow::Project => {
                 self.project_window.handle_input_key(key_code);
                 match self.project_window.get_input_mode() {
-                    InputMode::CommandMode => {
-                        match key_code {
-                            KeyCode::Char('q') => self.quit(),
-                            KeyCode::Tab => self.switch_to_window(SelectedWindow::Task),
-                            _ => {}
-                        }
-                    }
+                    InputMode::CommandMode => match key_code {
+                        KeyCode::Char('q') => self.quit(),
+                        KeyCode::Tab => self.switch_to_window(SelectedWindow::Task),
+                        _ => {}
+                    },
                     _ => {}
                 }
             }
             SelectedWindow::Task => {
                 self.task_window.handle_input_key(key_code);
                 match self.task_window.get_input_mode() {
-                    InputMode::CommandMode => {
-                        match key_code {
-                            KeyCode::Char('q') => self.quit(),
-                            KeyCode::Tab => self.switch_to_window(SelectedWindow::Project),
-                            _ => {}
-                        }
-                    }
+                    InputMode::CommandMode => match key_code {
+                        KeyCode::Char('q') => self.quit(),
+                        KeyCode::Tab => self.switch_to_window(SelectedWindow::Project),
+                        _ => {}
+                    },
                     _ => {}
                 }
             }
@@ -205,21 +207,6 @@ impl Project {
             description: String::from("Sample description"),
             active_tasks: vec![],
             completed_tasks: vec![],
-        }
-    }
-
-    pub fn write_project_to_path(&self, path_for_project: PathBuf) -> Result<(), std::io::Error> {
-        let project_string = match serde_json::to_string(self) {
-            Ok(p_string) => p_string,
-            Err(e) => {
-                return Result::Err(std::io::Error::from(e));
-            }
-        };
-        let mut project_file_path = path_for_project.join(&self.name);
-        project_file_path.set_extension(utils::PROJECT_FILE_EXTENSION);
-        match std::fs::write(project_file_path, project_string) {
-            Ok(()) => Ok(()),
-            Err(e) => Result::Err(e),
         }
     }
 

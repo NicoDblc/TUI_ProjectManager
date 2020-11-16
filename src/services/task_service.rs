@@ -2,21 +2,19 @@ use crate::services::task_service::TaskInputChoice::{AddName, EditDescription};
 use crate::services::Service;
 use crate::structure::{Project, Task, TaskContainer};
 use crate::ui::InputMode::CommandMode;
-use crate::ui::{PopupInputWindow, PopupMessageWindow};
 use crate::ui::{Completable, DisplayList, Drawable, InputMode, InputReceptor, InputReturn};
+use crate::ui::{PopupInputWindow, PopupMessageWindow};
+use crate::utils;
 use crossterm::event::KeyCode;
-use std::io::{Error, Stdout};
-use std::path::{PathBuf, Path};
+use std::io::Stdout;
+use std::ops::Add;
+use std::path::PathBuf;
 use tui::backend::CrosstermBackend;
 use tui::layout::Direction::{Horizontal, Vertical};
 use tui::layout::{Constraint, Layout, Rect};
 use tui::text::Text;
 use tui::widgets::{Block, Borders, List, ListItem, Paragraph};
 use tui::Frame;
-use crate::utils;
-use smart_default;
-use std::net::Shutdown::Write;
-use std::ops::Add;
 
 #[derive(SmartDefault)]
 enum TaskInputChoice {
@@ -39,13 +37,14 @@ pub struct TaskService {
 }
 
 impl TaskService {
-
-    pub fn new(working_path: PathBuf, project_name : String) -> TaskService {
-        let mut project_path = working_path.join(String::from('.').add(utils::PROJECT_FILE_EXTENSION)).with_file_name(project_name);
+    pub fn new(working_path: PathBuf, project_name: String) -> TaskService {
+        let mut project_path = working_path
+            .join(String::from('.').add(utils::PROJECT_FILE_EXTENSION))
+            .with_file_name(project_name);
         project_path.set_extension(utils::PROJECT_FILE_EXTENSION);
         let loaded_project = match utils::load_project_from_path(project_path.clone()) {
             Ok(loaded_project) => loaded_project,
-            Err(_) => Project::default()
+            Err(_) => Project::default(),
         };
         TaskService {
             working_path: project_path,
@@ -56,7 +55,7 @@ impl TaskService {
             input_mode: InputMode::CommandMode,
             input_popup: PopupInputWindow::default(),
             input_popup_type: TaskInputChoice::AddName,
-            message_popup: PopupMessageWindow::default()
+            message_popup: PopupMessageWindow::default(),
         }
     }
 
@@ -92,10 +91,12 @@ impl TaskService {
                 self.active_tasks_list.array.remove(val);
                 self.selected_project.active_tasks = self.active_tasks_list.array.clone();
                 self.selected_project.completed_tasks = self.completed_tasks_list.array.clone();
-                match self.selected_project
-                    .write_project_full_path(self.working_path.clone()){
-                    Ok(_)  => {},
-                    Err(e) => self.create_message_popup(e.to_string())
+                match self
+                    .selected_project
+                    .write_project_full_path(self.working_path.clone())
+                {
+                    Ok(_) => {}
+                    Err(e) => self.create_message_popup(e.to_string()),
                 };
             }
             None => {}
@@ -111,10 +112,12 @@ impl TaskService {
                 self.completed_tasks_list.array.remove(val);
                 self.selected_project.completed_tasks = self.completed_tasks_list.array.clone();
                 self.selected_project.active_tasks = self.active_tasks_list.array.clone();
-                match self.selected_project
-                    .write_project_full_path(self.working_path.clone()){
-                  Ok(_) => {},
-                    Err(e) => self.create_message_popup(e.to_string())
+                match self
+                    .selected_project
+                    .write_project_full_path(self.working_path.clone())
+                {
+                    Ok(_) => {}
+                    Err(e) => self.create_message_popup(e.to_string()),
                 };
             }
             None => {}
@@ -134,7 +137,8 @@ impl TaskService {
             }
         };
         self.active_tasks_list = DisplayList::from(self.selected_project.active_tasks.clone());
-        self.completed_tasks_list = DisplayList::from(self.selected_project.completed_tasks.clone());
+        self.completed_tasks_list =
+            DisplayList::from(self.selected_project.completed_tasks.clone());
     }
 }
 
@@ -211,23 +215,18 @@ impl Drawable for TaskService {
         // Lower layout
         let description_block = Block::default().title("Description").borders(Borders::ALL);
         let description: String = match self.focused_on_active {
-          true => {
-              match self.active_tasks_list.state.selected() {
-                  Some(val) => {
-                      self.active_tasks_list.array[val].description.clone()
-                  },
-                  None => String::from("No task selected")
-              }
-          },
-            false => {
-                match self.completed_tasks_list.state.selected() {
-                    Some(val) => self.completed_tasks_list.array[val].description.clone(),
-                    None => String::from("No task selected")
-                }
-            }
+            true => match self.active_tasks_list.state.selected() {
+                Some(val) => self.active_tasks_list.array[val].description.clone(),
+                None => String::from("No task selected"),
+            },
+            false => match self.completed_tasks_list.state.selected() {
+                Some(val) => self.completed_tasks_list.array[val].description.clone(),
+                None => String::from("No task selected"),
+            },
         };
-        let description_paragraph = Paragraph::new(Text::from(description)).block(description_block);
-        frame.render_widget(description_paragraph,initial_layout[1]);
+        let description_paragraph =
+            Paragraph::new(Text::from(description)).block(description_block);
+        frame.render_widget(description_paragraph, initial_layout[1]);
 
         // Popups
         if self.input_popup.is_active() {
@@ -301,15 +300,21 @@ impl InputReceptor for TaskService {
                         if self.input_popup.is_completed() {
                             match self.input_popup_type {
                                 AddName => {
-                                    self.selected_project.add_task(self.input_popup.get_input_data(), String::from("Description"));
-                                    match self.selected_project.write_project_full_path(self.working_path.clone()){
-                                      Ok(_) => {
-                                          self.input_popup.set_active(false);
-                                          self.input_mode = CommandMode;
-                                          self.update_project();
-                                      },
+                                    self.selected_project.add_task(
+                                        self.input_popup.get_input_data(),
+                                        String::from("Description"),
+                                    );
+                                    match self
+                                        .selected_project
+                                        .write_project_full_path(self.working_path.clone())
+                                    {
+                                        Ok(_) => {
+                                            self.input_popup.set_active(false);
+                                            self.input_mode = CommandMode;
+                                            self.update_project();
+                                        }
                                         Err(e) => {
-                                            self.create_message_popup(String::from(self.working_path.clone().to_str().unwrap()));
+                                            self.create_message_popup(e.to_string());
                                         }
                                     };
                                 }
@@ -317,49 +322,69 @@ impl InputReceptor for TaskService {
                                     let inputted_string = self.input_popup.get_input_data();
                                     match self.focused_on_active {
                                         true => {
-                                            match self.active_tasks_list.state.selected(){
+                                            match self.active_tasks_list.state.selected() {
                                                 Some(val) => {
-                                                    self.active_tasks_list.array[val].description = inputted_string;
-                                                    self.selected_project.active_tasks = self.active_tasks_list.array.clone();
-                                                    match self.selected_project.write_project_full_path(self.working_path.clone()) {
+                                                    self.active_tasks_list.array[val].description =
+                                                        inputted_string;
+                                                    self.selected_project.active_tasks =
+                                                        self.active_tasks_list.array.clone();
+                                                    match self
+                                                        .selected_project
+                                                        .write_project_full_path(
+                                                            self.working_path.clone(),
+                                                        ) {
                                                         Ok(_) => {
                                                             self.input_popup.set_active(false);
                                                             self.input_mode = CommandMode;
                                                             self.update_project();
-                                                        },
+                                                        }
                                                         Err(e) => {
-                                                            self.create_message_popup(e.to_string());
+                                                            self.create_message_popup(
+                                                                e.to_string(),
+                                                            );
                                                         }
                                                     }
-                                                },
+                                                }
                                                 None => {
-                                                    self.create_message_popup(String::from("Selected task is invalid"));
+                                                    self.create_message_popup(String::from(
+                                                        "Selected task is invalid",
+                                                    ));
                                                 }
                                             };
                                         }
                                         false => {
                                             match self.completed_tasks_list.state.selected() {
                                                 Some(val) => {
-                                                    self.completed_tasks_list.array[val].description = inputted_string;
-                                                    self.selected_project.completed_tasks = self.completed_tasks_list.array.clone();
-                                                    match self.selected_project.write_project_full_path(self.working_path.clone()) {
+                                                    self.completed_tasks_list.array[val]
+                                                        .description = inputted_string;
+                                                    self.selected_project.completed_tasks =
+                                                        self.completed_tasks_list.array.clone();
+                                                    match self
+                                                        .selected_project
+                                                        .write_project_full_path(
+                                                            self.working_path.clone(),
+                                                        ) {
                                                         Ok(_) => {
                                                             self.input_popup.set_active(false);
                                                             self.input_mode = CommandMode;
                                                             self.update_project();
-                                                        },
+                                                        }
                                                         Err(e) => {
-                                                            self.create_message_popup(e.to_string());
+                                                            self.create_message_popup(
+                                                                e.to_string(),
+                                                            );
                                                         }
                                                     }
-                                                },
+                                                }
                                                 None => {
-                                                    self.create_message_popup(String::from("Selected task is invalid"));
+                                                    self.create_message_popup(String::from(
+                                                        "Selected task is invalid",
+                                                    ));
                                                 }
                                             };
                                         }
                                     };
-                                },
+                                }
                             }
                         }
                     }
@@ -381,7 +406,7 @@ impl InputReceptor for TaskService {
     fn get_input_mode(&self) -> InputMode {
         match self.input_mode {
             InputMode::CommandMode => InputMode::CommandMode,
-            InputMode::WriteMode => InputMode::WriteMode
+            InputMode::WriteMode => InputMode::WriteMode,
         }
     }
 }
