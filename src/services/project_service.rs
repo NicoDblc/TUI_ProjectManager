@@ -35,15 +35,15 @@ pub struct ProjectManagementService<'a> {
 }
 
 impl<'a> ProjectManagementService<'a> {
-    pub fn new(projects: Vec<Project>) -> ProjectManagementService<'a> {
+    pub fn new(working_path: PathBuf) -> ProjectManagementService<'a> {
         let mut project_window = ProjectManagementService {
-            projects_to_display: DisplayList::from(projects),
+            projects_to_display: DisplayList::from(utils::get_projects_in_path(working_path.clone())),
             selected_project_active_tasks: Vec::new(),
             selected_project_completed_tasks: Vec::new(),
             project_input_popup: PopupInputWindow::default(),
             input_mode: InputMode::CommandMode,
             input_type: ProjectInputType::ProjectAdd,
-            program_work_path: PathBuf::new(),
+            program_work_path: working_path,
             message_popup: PopupMessageWindow::default(),
             delete_project_popup: PopupBinaryChoice::default(),
         };
@@ -68,14 +68,14 @@ impl<'a> ProjectManagementService<'a> {
         .active_tasks
         .clone()
         .into_iter()
-        .map(|a| ListItem::new(Text::from(a.description)))
+        .map(|a| ListItem::new(Text::from(a.name)))
         .collect();
         self.selected_project_completed_tasks = self.projects_to_display.array
             [self.projects_to_display.state.selected().unwrap()]
         .completed_tasks
         .clone()
         .into_iter()
-        .map(|a| ListItem::new(Text::from(a.description)))
+        .map(|a| ListItem::new(Text::from(a.name)))
         .collect();
     }
 
@@ -140,10 +140,20 @@ impl<'a> ProjectManagementService<'a> {
         }
     }
 
+    // Unsafe. TODO: Fix
     fn get_selected_project_name(&self) -> String {
         self.projects_to_display.array[self.projects_to_display.state.selected().unwrap()]
             .clone()
             .name
+    }
+
+    pub fn get_selected_project_path_name(&self) -> Option<String> {
+        match self.projects_to_display.state.selected() {
+            Some(val) => {
+                Option::Some(self.projects_to_display.array[val].clone().name)
+            },
+            None => None
+        }
     }
 }
 

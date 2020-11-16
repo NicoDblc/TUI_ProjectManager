@@ -16,6 +16,8 @@ use crate::services::project_service::ProjectManagementService;
 use crate::services::Service;
 use crossterm::event::KeyCode;
 use std::path::PathBuf;
+use crate::services::task_service::TaskService;
+use std::ops::Add;
 
 enum SelectedWindow {
     Project,
@@ -26,23 +28,24 @@ pub struct Application<'a> {
     terminal: tui::Terminal<CrosstermBackend<io::Stdout>>,
     active_folder_path: std::path::PathBuf,
     project_window: ProjectManagementService<'a>,
+    task_window: TaskService,
     pub is_running: bool,
     selected_window: SelectedWindow,
 }
 
 impl<'a> Application<'a> {
     pub fn new(path: std::path::PathBuf) -> Application<'a> {
-        let serialized_projects = utils::get_projects_in_path(path.clone());
         let stdout = io::stdout();
         let backend = CrosstermBackend::new(stdout);
         let mut b_terminal = Terminal::new(backend).unwrap();
         b_terminal.clear().unwrap();
-        let mut app_project_window = ProjectManagementService::new(serialized_projects);
-        app_project_window.set_working_directory(path.clone());
+        let mut app_project_window = ProjectManagementService::new(path.clone());
+        app_project_window.set_working_directory(path.clone().join(String::from(".").add(utils::PROJECT_FILE_EXTENSION)));
         Application {
             terminal: b_terminal,
             active_folder_path: path,
             project_window: app_project_window,
+            task_window: TaskService::default(),
             is_running: true,
             selected_window: SelectedWindow::Project,
         }
@@ -75,7 +78,54 @@ impl<'a> Application<'a> {
     }
 
     fn display_tasks_window(&mut self) {
-        // TODO: Implement
+        let project_name = self.project_window.get_selected_project_path_name().unwrap();
+        let mut project_path = self.active_folder_path.clone();//.with_file_name(project_name);
+        project_path = project_path.join(String::from(".").add(utils::PROJECT_FILE_EXTENSION));
+        project_path = project_path.with_file_name(project_name);
+        project_path.set_extension(utils::PROJECT_FILE_EXTENSION);
+        let text_active_path = Text::from(project_path.to_str().unwrap());
+        let task_window_ref = &mut self.task_window;
+        self.terminal
+            .draw(|f| {
+                let window_layout = Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints(
+                        [
+                            Constraint::Percentage(5),
+                            Constraint::Percentage(90),
+                            Constraint::Percentage(5),
+                        ]
+                            .as_ref(),
+                    )
+                    .split(f.size());
+                let current_project_path = Paragraph::new(text_active_path);
+                f.render_widget(current_project_path, window_layout[0]);
+                let controls_string =
+                    String::from(task_window_ref.get_controls_description().as_str());
+                let controls_para = Paragraph::new(Text::from(controls_string));
+                f.render_widget(controls_para, window_layout[2]);
+                task_window_ref.display(f, window_layout[1]);
+            })
+            .unwrap();
+    }
+
+    fn switch_to_window(&mut self, new_window: SelectedWindow) {
+        self.selected_window = new_window;
+        match self.selected_window {
+            SelectedWindow::Project => {
+                self.project_window = ProjectManagementService::new(self.active_folder_path.clone());
+            }
+            SelectedWindow::Task => {
+                match self.project_window.get_selected_project_path_name() {
+                    Some(project_name) => {
+                        self.task_window = TaskService::new(self.active_folder_path.clone(), project_name)
+                    },
+                    None => {
+                        self.selected_window = SelectedWindow::Project
+                    }
+                };
+            }
+        }
     }
 
     pub fn update(&mut self) {
@@ -94,15 +144,27 @@ impl<'a> Application<'a> {
                 self.project_window.handle_input_key(key_code);
                 match self.project_window.get_input_mode() {
                     InputMode::CommandMode => {
-                        if key_code == KeyCode::Char('q') {
-                            self.quit();
+                        match key_code {
+                            KeyCode::Char('q') => self.quit(),
+                            KeyCode::Tab => self.switch_to_window(SelectedWindow::Task),
+                            _ => {}
                         }
                     }
                     _ => {}
                 }
             }
             SelectedWindow::Task => {
-                // TODO: Handle/create task window
+                self.task_window.handle_input_key(key_code);
+                match self.task_window.get_input_mode() {
+                    InputMode::CommandMode => {
+                        match key_code {
+                            KeyCode::Char('q') => self.quit(),
+                            KeyCode::Tab => self.switch_to_window(SelectedWindow::Project),
+                            _ => {}
+                        }
+                    }
+                    _ => {}
+                }
             }
         }
     }
@@ -136,7 +198,6 @@ pub struct Project {
     pub completed_tasks: Vec<Task>,
 }
 
-// TODO: implement the serialize + save
 impl Project {
     pub fn new(project_name: String) -> Project {
         Project {
@@ -157,6 +218,19 @@ impl Project {
         let mut project_file_path = path_for_project.join(&self.name);
         project_file_path.set_extension(utils::PROJECT_FILE_EXTENSION);
         match std::fs::write(project_file_path, project_string) {
+            Ok(()) => Ok(()),
+            Err(e) => Result::Err(e),
+        }
+    }
+
+    pub fn write_project_full_path(&self, path_for_project: PathBuf) -> Result<(), std::io::Error> {
+        let project_string = match serde_json::to_string(self) {
+            Ok(p_string) => p_string,
+            Err(e) => {
+                return Result::Err(std::io::Error::from(e));
+            }
+        };
+        match std::fs::write(path_for_project, project_string) {
             Ok(()) => Ok(()),
             Err(e) => Result::Err(e),
         }
@@ -202,10 +276,10 @@ impl InformationDisplay for Task {
 }
 
 impl TaskContainer for Task {
-    fn add_task(&mut self, task_name: String, tasK_description: String) {
+    fn add_task(&mut self, task_name: String, task_description: String) {
         let task = Task {
             name: task_name,
-            description: tasK_description,
+            description: task_description,
             time_spent: 0,
             estimate: 0,
             sub_tasks: vec![],

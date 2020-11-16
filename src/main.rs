@@ -6,6 +6,9 @@ use std::{
     time::{Duration, Instant},
 };
 
+#[macro_use]
+extern crate smart_default;
+
 mod services;
 mod ui;
 mod utils;

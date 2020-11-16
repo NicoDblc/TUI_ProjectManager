@@ -33,6 +33,22 @@ pub fn delete_project_of_name(project_name: String, working_path: PathBuf) -> Re
     }
 }
 
+pub fn load_project_from_path(path: PathBuf) -> Result<Project, std::io::Error> {
+    match std::fs::read_to_string(path) {
+        Ok(project_string) => {
+            match serde_json::from_str(project_string.as_str()) {
+                Ok(deserialized_project) => {
+                    Result::Ok(deserialized_project)
+                },
+                Err(e) => Result::Err(Error::from(e)),
+            }
+        },
+        Err(e) => {
+            Result::Err(e)
+        }
+    }
+}
+
 pub fn get_projects_in_path(path: PathBuf) -> Vec<Project> {
     let mut serialized_projects: Vec<Project> = vec![];
     let folder_result = std::fs::read_dir(path.as_path()).unwrap();

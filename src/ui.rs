@@ -15,7 +15,9 @@ pub struct DisplayList<T> {
     pub(crate) array: Vec<T>,
 }
 
+#[derive(SmartDefault)]
 pub enum InputMode {
+    #[default]
     CommandMode,
     WriteMode,
 }
@@ -70,11 +72,16 @@ impl<T> DisplayList<T> {
     pub(crate) fn next(&mut self) {
         let i = match self.state.selected() {
             Some(i) => {
-                if i < self.array.len() - 1 {
-                    i + 1
-                } else {
-                    i
+                if self.array.len() > 0 {
+                    if i < self.array.len() - 1 {
+                        i + 1
+                    } else {
+                        i
+                    }
+                }else {
+                    0
                 }
+
             }
             None => 0,
         };
