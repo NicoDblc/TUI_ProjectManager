@@ -14,7 +14,6 @@ use crate::utils;
 
 use crate::services::project_service::ProjectManagementService;
 use crate::services::task_service::TaskService;
-use crate::services::Service;
 use crossterm::event::KeyCode;
 use std::ops::Add;
 use std::path::PathBuf;
@@ -39,11 +38,7 @@ impl<'a> Application<'a> {
         let backend = CrosstermBackend::new(stdout);
         let mut b_terminal = Terminal::new(backend).unwrap();
         b_terminal.clear().unwrap();
-        let mut app_project_window = ProjectManagementService::new(path.clone());
-        app_project_window.set_working_directory(
-            path.clone()
-                .join(String::from(".").add(utils::PROJECT_FILE_EXTENSION)),
-        );
+        let app_project_window = ProjectManagementService::new(path.clone());
         Application {
             terminal: b_terminal,
             active_folder_path: path,
@@ -217,9 +212,12 @@ impl Project {
                 return Result::Err(std::io::Error::from(e));
             }
         };
-        match std::fs::write(path_for_project, project_string) {
+        match std::fs::write(path_for_project.clone(), project_string) {
             Ok(()) => Ok(()),
-            Err(e) => Result::Err(e),
+            Err(e) => {
+                println!("Fucking error: {}", path_for_project.to_str().unwrap());
+                return Result::Err(e)
+            },
         }
     }
 }

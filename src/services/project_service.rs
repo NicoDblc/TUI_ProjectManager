@@ -14,6 +14,7 @@ use tui::layout::{Constraint, Direction, Layout, Rect};
 use tui::text::Text;
 use tui::widgets::{Block, Borders, List, ListItem, Paragraph};
 use tui::Frame;
+use crate::services::project_service::ProjectInputType::ProjectAdd;
 
 enum ProjectInputType {
     ProjectAdd,
@@ -92,18 +93,9 @@ impl<'a> ProjectManagementService<'a> {
     }
 
     fn write_project_to_disk(&self, project_to_write: Project) -> Result<(), Error> {
-        let project_string = match serde_json::to_string(&project_to_write) {
-            Ok(p_string) => p_string,
-            Err(e) => {
-                return Result::Err(Error::from(e));
-            }
-        };
-        let mut project_file_path = self.program_work_path.join(project_to_write.name);
+        let mut project_file_path = self.program_work_path.join(project_to_write.name.clone());
         project_file_path.set_extension(utils::PROJECT_FILE_EXTENSION);
-        match std::fs::write(project_file_path, project_string) {
-            Ok(()) => Ok(()),
-            Err(e) => Result::Err(e),
-        }
+        project_to_write.write_project_full_path(project_file_path)
     }
 
     fn delete_selected_project(&mut self) {
@@ -230,7 +222,11 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                             self.input_mode = InputMode::CommandMode;
                         }
                         Err(e) => {
-                            self.create_popup_with_message(e.to_string());
+                            self.create_popup_with_message(
+                                e.to_string()
+                                    .add(" With path: ")
+                                    .add(self.program_work_path.clone().to_str().unwrap()),
+                            );
                             self.project_input_popup.reset_completion();
                             return;
                         }

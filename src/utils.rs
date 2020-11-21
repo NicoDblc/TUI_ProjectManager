@@ -11,17 +11,19 @@ pub fn create_working_folder_if_not_exist() {
         match std::fs::create_dir(working_folder.as_path()) {
             Ok(_) => {}
             Err(e) => {
-                panic!("Error occurred while create the working dir: {}", e);
+                panic!("Error occurred while creating the working dir: {}", e);
             }
         };
     }
 }
 
 pub fn get_working_folder() -> PathBuf {
-    // TODO: check if program was opened in a specific directory
-    let home_path = dirs::home_dir().unwrap();
+    let work_path = match std::env::args().nth(1) {
+        Some(val) => std::path::PathBuf::from(val),
+        None => dirs::home_dir().unwrap(),
+    };
     let folder_path = String::from('.').add(PROJECT_FILE_EXTENSION);
-    home_path.join(Path::new(folder_path.as_str()))
+    work_path.join(Path::new(folder_path.as_str()))
 }
 
 pub fn delete_project_of_name(project_name: String, working_path: PathBuf) -> Result<(), Error> {
@@ -72,32 +74,31 @@ pub fn get_projects_in_path(path: PathBuf) -> Vec<Project> {
 
 #[test]
 fn create_dummy_project() {
-    create_dummy_project_with_name("project1".to_string());
-    create_dummy_project_with_name("project2".to_string());
-    create_dummy_project_with_name("project3".to_string());
+    create_dummy_project_with_name(String::from("project1"));
+    create_dummy_project_with_name(String::from("project2"));
+    create_dummy_project_with_name(String::from("project3"));
 }
-
+#[allow(dead_code)]
 fn create_dummy_project_with_name(name: String) {
     create_working_folder_if_not_exist();
     let mut p = Project::new(name.clone());
     p.description = p.name.clone().add(" description");
     p.add_task(
-        name.clone().add("Jambalaya 1"),
+        name.clone().add("test 1"),
         String::from("Sample description"),
     );
     p.add_task(
-        name.clone().add("Jambalaya 2"),
+        name.clone().add("test2 2"),
         String::from("Sample description"),
     );
     p.completed_tasks.push(Task::new(
         String::from("a completed task"),
         String::from("Sample description"),
     ));
-    let project_string = serde_json::to_string(&p).unwrap();
-    let work_folder = get_working_folder();
-    std::fs::write(
-        work_folder.join(name.add(".pman")).as_path(),
-        project_string,
-    )
-    .unwrap();
+    let mut project_file_path = get_working_folder().join(p.name.clone());
+    project_file_path.set_extension(PROJECT_FILE_EXTENSION);
+    match p.write_project_full_path(project_file_path) {
+        Ok(_) => {},
+        Err(e) => panic!("{}",e)
+    }
 }
