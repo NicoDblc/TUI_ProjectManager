@@ -80,7 +80,7 @@ impl<'a> Application<'a> {
             .project_window
             .get_selected_project_path_name()
             .unwrap();
-        let mut project_path = self.active_folder_path.clone(); //.with_file_name(project_name);
+        let mut project_path = self.active_folder_path.clone();
         project_path = project_path.join(String::from(".").add(utils::PROJECT_FILE_EXTENSION));
         project_path = project_path.with_file_name(project_name);
         project_path.set_extension(utils::PROJECT_FILE_EXTENSION);
@@ -147,6 +147,7 @@ impl<'a> Application<'a> {
                     InputMode::CommandMode => match key_code {
                         KeyCode::Char('q') => self.quit(),
                         KeyCode::Tab => self.switch_to_window(SelectedWindow::Task),
+                        KeyCode::Enter => self.switch_to_window(SelectedWindow::Task),
                         _ => {}
                     },
                     _ => {}

@@ -294,7 +294,7 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
         } else if self.project_input_popup.is_active() {
             return self.project_input_popup.get_controls_description();
         }
-        String::from("q - Quit     a - Add project     d - Delete project     e - Edit Project Description     n - Edit Project name")
+        String::from("Q: Quit | A: Add project | D: Delete project | E: Edit Project Description | N: Edit Project name | Tab: Go to Tasks")
     }
 
     fn get_input_mode(&self) -> InputMode {

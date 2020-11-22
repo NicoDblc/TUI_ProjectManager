@@ -19,8 +19,6 @@ enum Event<I> {
 }
 
 fn main() {
-    // TODO:      - handle path pass as parameter to the program
-
     utils::create_working_folder_if_not_exist();
     let (tx, rx) = mpsc::channel();
     let tick_rate = Duration::from_millis(250);

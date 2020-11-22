@@ -399,7 +399,7 @@ impl InputReceptor for TaskService {
         } else if self.input_popup.is_active() {
             return self.input_popup.get_controls_description();
         } else {
-            String::from("Navigate with arrows | C: Mark as completed | U: Mark as incomplete | A: Add task | E: Edit task description")
+            String::from("Navigate with arrows | C: Mark as completed | U: Mark as incomplete | A: Add task | E: Edit task description | Tab: Back To Projects")
         }
     }
 
