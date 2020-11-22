@@ -132,8 +132,7 @@ impl<'a> ProjectManagementService<'a> {
             );
         }
     }
-
-    // Unsafe. TODO: Fix
+    
     fn get_selected_project_name(&self) -> String {
         self.projects_to_display.array[self.projects_to_display.state.selected().unwrap()]
             .clone()
