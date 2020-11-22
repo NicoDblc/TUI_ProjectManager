@@ -14,7 +14,6 @@ use tui::layout::{Constraint, Direction, Layout, Rect};
 use tui::text::Text;
 use tui::widgets::{Block, Borders, List, ListItem, Paragraph};
 use tui::Frame;
-use crate::services::project_service::ProjectInputType::ProjectAdd;
 
 enum ProjectInputType {
     ProjectAdd,
