@@ -3,6 +3,10 @@ name = "project_manager"
 version = "0.1.0"
 authors = ["NicoDblc <nicolaslaniel@pm.me>"]
 edition = "2018"
+exclude = ["Documents/*"]
+license-file = "LICENSE"
+readme = "Readme.md"
+repository = "https://github.com/NicoDblc/TUI_ProjectManager"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
