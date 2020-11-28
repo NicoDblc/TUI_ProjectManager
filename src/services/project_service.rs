@@ -213,11 +213,9 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                     let new_project = Project::new(self.project_input_popup.get_input_data());
                     match self.write_project_to_disk(new_project) {
                         Ok(_) => {
+                            self.reload_projects();
                             self.project_input_popup.set_active(false);
-                            self.update_projects(get_projects_in_path(
-                                self.program_work_path.clone(),
-                            ));
-                            self.input_mode = InputMode::CommandMode;
+                            // self.input_mode = InputMode::CommandMode;
                         }
                         Err(e) => {
                             self.create_popup_with_message(

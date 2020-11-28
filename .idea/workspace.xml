@@ -26,7 +26,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="dfde29e1-6ab3-430e-8399-b174564982e3" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Readme.md" beforeDir="false" afterPath="$PROJECT_DIR$/Readme.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/services/project_service.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/services/project_service.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -166,6 +167,10 @@
       <screen x="0" y="0" width="2560" height="1410" />
     </state>
     <state x="988" y="280" width="583" height="849" key="find.popup/0.0.2560.1410@0.0.2560.1410" timestamp="1606067354320" />
+    <state x="871" y="279" width="1097" height="851" key="new project wizard" timestamp="1606345996213">
+      <screen x="0" y="0" width="2560" height="1410" />
+    </state>
+    <state x="871" y="279" width="1097" height="851" key="new project wizard/0.0.2560.1410@0.0.2560.1410" timestamp="1606345996213" />
     <state x="936" y="333" key="run.anything.popup" timestamp="1606066236926">
       <screen x="0" y="0" width="2560" height="1410" />
     </state>
