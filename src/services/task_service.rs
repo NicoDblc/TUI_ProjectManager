@@ -13,7 +13,7 @@ use tui::backend::CrosstermBackend;
 use tui::layout::Direction::{Horizontal, Vertical};
 use tui::layout::{Constraint, Layout, Rect};
 use tui::text::Text;
-use tui::widgets::{Block, Borders, List, ListItem, Paragraph};
+use tui::widgets::{Block, Borders, List, ListItem, Paragraph, Wrap};
 use tui::Frame;
 
 #[derive(SmartDefault)]
@@ -186,7 +186,7 @@ impl Drawable for TaskService {
                 .array
                 .clone()
                 .into_iter()
-                .map(|task| ListItem::new(Text::from(task.name)))
+                .map(|task| ListItem::new(Text::from(task.name))) //TODO Must format the Text, adding \n in places where the text must wrap because exceeds the width of the available line space
                 .collect(),
         )
         .block(completed_task_block)
@@ -196,7 +196,6 @@ impl Drawable for TaskService {
                 .add_modifier(tui::style::Modifier::BOLD),
         )
         .highlight_symbol("-> ");
-
         if self.focused_on_active {
             frame.render_stateful_widget(
                 active_task_display_list,
@@ -224,8 +223,9 @@ impl Drawable for TaskService {
                 None => String::from("No task selected"),
             },
         };
-        let description_paragraph =
-            Paragraph::new(Text::from(description)).block(description_block);
+        let description_paragraph = Paragraph::new(Text::from(description))
+            .block(description_block)
+            .wrap(Wrap { trim: false });
         frame.render_widget(description_paragraph, initial_layout[1]);
 
         // Popups

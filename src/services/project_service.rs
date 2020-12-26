@@ -3,7 +3,6 @@ use crate::ui::{
     Completable, DisplayList, Drawable, InputMode, InputReceptor, InputReturn, PopupBinaryChoice,
     PopupInputWindow, PopupMessageWindow,
 };
-use crate::utils::get_projects_in_path;
 use crate::{services, utils};
 use crossterm::event::KeyCode;
 use std::io::{Error, Stdout};
@@ -132,7 +131,7 @@ impl<'a> ProjectManagementService<'a> {
             );
         }
     }
-    
+
     fn get_selected_project_name(&self) -> String {
         self.projects_to_display.array[self.projects_to_display.state.selected().unwrap()]
             .clone()

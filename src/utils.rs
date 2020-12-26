@@ -98,7 +98,7 @@ fn create_dummy_project_with_name(name: String) {
     let mut project_file_path = get_working_folder().join(p.name.clone());
     project_file_path.set_extension(PROJECT_FILE_EXTENSION);
     match p.write_project_full_path(project_file_path) {
-        Ok(_) => {},
-        Err(e) => panic!("{}",e)
+        Ok(_) => {}
+        Err(e) => panic!("{}", e),
     }
 }

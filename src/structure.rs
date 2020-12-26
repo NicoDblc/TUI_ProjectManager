@@ -217,8 +217,8 @@ impl Project {
             Ok(()) => Ok(()),
             Err(e) => {
                 println!("Fucking error: {}", path_for_project.to_str().unwrap());
-                return Result::Err(e)
-            },
+                return Result::Err(e);
+            }
         }
     }
 }
