@@ -17,6 +17,23 @@ pub fn create_working_folder_if_not_exist() {
     }
 }
 
+pub fn wrap(string_to_wrap: String, wrap_at_length: u32) -> String {
+    let words: Vec<&str> = string_to_wrap.split(" ").collect();
+    let mut line_length: u32 = 0;
+    let mut final_string = String::new();
+    for word in words.iter() {
+        line_length += word.len() as u32;
+        if line_length >= wrap_at_length {
+            final_string = final_string.add("\n");
+            line_length = 0;
+        } else {
+            final_string = final_string.add(" ");
+        }
+        final_string = final_string.add(word);
+    }
+    final_string
+}
+
 pub fn get_working_folder() -> PathBuf {
     let work_path = match std::env::args().nth(1) {
         Some(val) => std::path::PathBuf::from(val),

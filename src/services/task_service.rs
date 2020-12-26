@@ -162,12 +162,13 @@ impl Drawable for TaskService {
             .split(initial_layout[0]);
 
         let active_task_block = Block::default().borders(Borders::ALL).title("Active Tasks");
+
         let active_task_display_list = List::new::<Vec<ListItem>>(
             self.active_tasks_list
                 .array
                 .clone()
                 .into_iter()
-                .map(|task| ListItem::new(Text::from(task.name)))
+                .map(|task| ListItem::new(Text::from(utils::wrap(task.name, task_layout[0].width as u32))))
                 .collect(),
         )
         .block(active_task_block)
@@ -186,7 +187,7 @@ impl Drawable for TaskService {
                 .array
                 .clone()
                 .into_iter()
-                .map(|task| ListItem::new(Text::from(task.name))) //TODO Must format the Text, adding \n in places where the text must wrap because exceeds the width of the available line space
+                .map(|task| ListItem::new(Text::from(utils::wrap(task.name, task_layout[1].width as u32))))
                 .collect(),
         )
         .block(completed_task_block)
