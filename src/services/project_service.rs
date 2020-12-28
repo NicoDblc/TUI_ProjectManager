@@ -11,7 +11,7 @@ use std::path::PathBuf;
 use tui::backend::CrosstermBackend;
 use tui::layout::{Constraint, Direction, Layout, Rect};
 use tui::text::Text;
-use tui::widgets::{Block, Borders, List, ListItem, Paragraph};
+use tui::widgets::{Block, Borders, List, ListItem, Paragraph, Wrap};
 use tui::Frame;
 
 enum ProjectInputType {
@@ -344,7 +344,7 @@ impl<'a> Drawable for ProjectManagementService<'a> {
                     .clone()
                     .description,
             )
-            .block(block),
+            .block(block).wrap(Wrap{trim : false}),
             false => Paragraph::new("").block(block),
         };
         frame.render_widget(p_description, project_layout[1]);

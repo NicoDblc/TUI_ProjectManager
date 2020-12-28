@@ -21,11 +21,13 @@ pub fn wrap(string_to_wrap: String, wrap_at_length: u32) -> String {
     let words: Vec<&str> = string_to_wrap.split(" ").collect();
     let mut line_length: u32 = 0;
     let mut final_string = String::new();
+    let shortened_wrap = wrap_at_length - 4; // arrow length
     for word in words.iter() {
-        line_length += word.len() as u32;
-        if line_length >= wrap_at_length {
+        line_length += word.chars().count() as u32;
+        line_length += 1; // accounting for the space
+        if line_length >= shortened_wrap {
             final_string = final_string.add("\n");
-            line_length = 0;
+            line_length = word.chars().count() as u32;
         } else {
             final_string = final_string.add(" ");
         }
