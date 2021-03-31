@@ -9,6 +9,7 @@ use std::{
 #[macro_use]
 extern crate smart_default;
 
+mod popups;
 mod services;
 mod ui;
 mod utils;
@@ -41,7 +42,7 @@ fn main() {
         }
     });
 
-    let mut app = structure::Application::new(utils::get_working_folder());
+    let mut app = structure::application::Application::new(utils::get_working_folder());
     while app.is_running {
         app.update();
         match rx.recv().unwrap() {

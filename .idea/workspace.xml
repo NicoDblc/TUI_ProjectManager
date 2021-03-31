@@ -26,7 +26,20 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="dfde29e1-6ab3-430e-8399-b174564982e3" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/popups.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/structure/application.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/structure/mod.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/structure/project.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/structure/task.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/services/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/project_service.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/services/project_s.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/task_service.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/services/task_s.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/structure.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ui.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,18 +68,37 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="TERMINAL_CUSTOM_COMMANDS_GOT_IT" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
     <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
   </component>
   <component name="RunManager">
-    <configuration default="true" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-      <option name="channel" value="DEFAULT" />
+    <configuration name="Run" type="CargoCommandRunConfiguration" factoryName="Cargo Command" nameIsGenerated="true">
       <option name="command" value="run" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
       <option name="allFeatures" value="false" />
       <option name="emulateTerminal" value="false" />
       <option name="backtrace" value="FULL" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
       <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+      <option name="command" value="run" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="emulateTerminal" value="false" />
+      <option name="backtrace" value="FULL" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
       <method v="2">
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
@@ -101,83 +133,5 @@
       </map>
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
-  </component>
-  <component name="WindowStateProjectService">
-    <state x="1047" y="528" key="#Notifications" timestamp="1605410734525">
-      <screen x="0" y="0" width="2560" height="1410" />
-    </state>
-    <state x="1047" y="528" key="#Notifications/0.0.2560.1410@0.0.2560.1410" timestamp="1605410734525" />
-    <state x="1187" y="353" width="1295" height="719" key="#Plugins" timestamp="1605985316037">
-      <screen x="0" y="0" width="2560" height="1410" />
-    </state>
-    <state x="199" y="275" key="#Plugins/0.0.1714.1113@0.0.1714.1113" timestamp="1602973815861" />
-    <state x="1187" y="353" width="1295" height="719" key="#Plugins/0.0.2560.1410@0.0.2560.1410" timestamp="1605985316037" />
-    <state x="734" y="359" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1605500192875">
-      <screen x="0" y="0" width="2560" height="1410" />
-    </state>
-    <state x="734" y="359" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.2560.1410@0.0.2560.1410" timestamp="1605500192875" />
-    <state x="1085" y="420" key="#com.intellij.ide.util.MemberChooser" timestamp="1604821212919">
-      <screen x="0" y="0" width="2560" height="1410" />
-    </state>
-    <state x="1085" y="420" key="#com.intellij.ide.util.MemberChooser/0.0.2560.1410/2560.0.1280.689@0.0.2560.1410" timestamp="1602396934801" />
-    <state x="1085" y="420" key="#com.intellij.ide.util.MemberChooser/0.0.2560.1410@0.0.2560.1410" timestamp="1604821212919" />
-    <state x="994" y="516" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog" timestamp="1602536774808">
-      <screen x="0" y="0" width="2560" height="1410" />
-    </state>
-    <state x="994" y="516" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog/0.0.2560.1410@0.0.2560.1410" timestamp="1602536774808" />
-    <state width="670" height="1282" key="GridCell.Tab.0.bottom" timestamp="1605506352488">
-      <screen x="0" y="0" width="2560" height="1410" />
-    </state>
-    <state width="1671" height="315" key="GridCell.Tab.0.bottom/0.0.1714.1113@0.0.1714.1113" timestamp="1604796307534" />
-    <state width="1278" height="1352" key="GridCell.Tab.0.bottom/0.0.2560.1410/2560.0.1280.689@0.0.2560.1410" timestamp="1602397291128" />
-    <state width="670" height="1282" key="GridCell.Tab.0.bottom/0.0.2560.1410@0.0.2560.1410" timestamp="1605506352488" />
-    <state width="670" height="1282" key="GridCell.Tab.0.center" timestamp="1605506352488">
-      <screen x="0" y="0" width="2560" height="1410" />
-    </state>
-    <state width="1671" height="315" key="GridCell.Tab.0.center/0.0.1714.1113@0.0.1714.1113" timestamp="1604796307534" />
-    <state width="1278" height="1352" key="GridCell.Tab.0.center/0.0.2560.1410/2560.0.1280.689@0.0.2560.1410" timestamp="1602397291128" />
-    <state width="670" height="1282" key="GridCell.Tab.0.center/0.0.2560.1410@0.0.2560.1410" timestamp="1605506352488" />
-    <state width="670" height="1282" key="GridCell.Tab.0.left" timestamp="1605506352488">
-      <screen x="0" y="0" width="2560" height="1410" />
-    </state>
-    <state width="1671" height="315" key="GridCell.Tab.0.left/0.0.1714.1113@0.0.1714.1113" timestamp="1604796307534" />
-    <state width="1278" height="1352" key="GridCell.Tab.0.left/0.0.2560.1410/2560.0.1280.689@0.0.2560.1410" timestamp="1602397291128" />
-    <state width="670" height="1282" key="GridCell.Tab.0.left/0.0.2560.1410@0.0.2560.1410" timestamp="1605506352488" />
-    <state width="670" height="1282" key="GridCell.Tab.0.right" timestamp="1605506352488">
-      <screen x="0" y="0" width="2560" height="1410" />
-    </state>
-    <state width="1671" height="315" key="GridCell.Tab.0.right/0.0.1714.1113@0.0.1714.1113" timestamp="1604796307534" />
-    <state width="1278" height="1352" key="GridCell.Tab.0.right/0.0.2560.1410/2560.0.1280.689@0.0.2560.1410" timestamp="1602397291128" />
-    <state width="670" height="1282" key="GridCell.Tab.0.right/0.0.2560.1410@0.0.2560.1410" timestamp="1605506352488" />
-    <state x="781" y="349" key="SettingsEditor" timestamp="1605982898510">
-      <screen x="0" y="0" width="2560" height="1410" />
-    </state>
-    <state x="781" y="349" key="SettingsEditor/0.0.2560.1410@0.0.2560.1410" timestamp="1605982898510" />
-    <state x="794" y="453" width="540" height="524" key="StructurePopup" timestamp="1602362711538">
-      <screen x="0" y="0" width="2560" height="1410" />
-    </state>
-    <state x="794" y="453" width="540" height="524" key="StructurePopup/0.0.2560.1410@0.0.2560.1410" timestamp="1602362711538" />
-    <state x="43" y="0" width="2533" height="1398" key="dock-window-1" timestamp="1605414033413">
-      <screen x="0" y="0" width="2560" height="1410" />
-    </state>
-    <state x="43" y="0" width="2533" height="1398" key="dock-window-1/0.0.2560.1410@0.0.2560.1410" timestamp="1605414033413" />
-    <state x="988" y="280" width="583" height="849" key="find.popup" timestamp="1606067354320">
-      <screen x="0" y="0" width="2560" height="1410" />
-    </state>
-    <state x="988" y="280" width="583" height="849" key="find.popup/0.0.2560.1410@0.0.2560.1410" timestamp="1606067354320" />
-    <state x="871" y="279" width="1097" height="851" key="new project wizard" timestamp="1606345996213">
-      <screen x="0" y="0" width="2560" height="1410" />
-    </state>
-    <state x="871" y="279" width="1097" height="851" key="new project wizard/0.0.2560.1410@0.0.2560.1410" timestamp="1606345996213" />
-    <state x="936" y="333" key="run.anything.popup" timestamp="1606066236926">
-      <screen x="0" y="0" width="2560" height="1410" />
-    </state>
-    <state x="936" y="333" key="run.anything.popup/0.0.2560.1410@0.0.2560.1410" timestamp="1606066236926" />
-    <state x="368" y="323" width="672" height="678" key="search.everywhere.popup" timestamp="1605995045827">
-      <screen x="0" y="0" width="2560" height="1410" />
-    </state>
-    <state x="246" y="255" width="672" height="536" key="search.everywhere.popup/0.0.1714.1113@0.0.1714.1113" timestamp="1602973792540" />
-    <state x="368" y="323" width="672" height="678" key="search.everywhere.popup/0.0.2560.1410/2560.0.1280.689@0.0.2560.1410" timestamp="1602397133107" />
-    <state x="368" y="323" width="672" height="678" key="search.everywhere.popup/0.0.2560.1410@0.0.2560.1410" timestamp="1605995045827" />
   </component>
 </project>

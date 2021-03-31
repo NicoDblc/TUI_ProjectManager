@@ -1,9 +1,10 @@
 pub static PROJECT_FILE_EXTENSION: &str = "pman";
+use crate::structure::project::Project;
+use crate::structure::task::Task;
+use crate::structure::*;
+use std::io::Error;
 use std::ops::Add;
 use std::path::{Path, PathBuf};
-
-use crate::structure::{Project, Task, TaskContainer};
-use std::io::Error;
 
 pub fn create_working_folder_if_not_exist() {
     let working_folder = get_working_folder();
@@ -52,43 +53,6 @@ pub fn delete_project_of_name(project_name: String, working_path: PathBuf) -> Re
         Ok(()) => Ok(()),
         Err(e) => Result::Err(e),
     }
-}
-
-pub fn load_project_from_path(path: PathBuf) -> Result<Project, std::io::Error> {
-    match std::fs::read_to_string(path) {
-        Ok(project_string) => match serde_json::from_str(project_string.as_str()) {
-            Ok(deserialized_project) => Result::Ok(deserialized_project),
-            Err(e) => Result::Err(Error::from(e)),
-        },
-        Err(e) => Result::Err(e),
-    }
-}
-
-pub fn get_projects_in_path(path: PathBuf) -> Vec<Project> {
-    let mut serialized_projects: Vec<Project> = vec![];
-    let folder_result = std::fs::read_dir(path.as_path()).unwrap();
-    for file in folder_result {
-        let f = file.unwrap();
-        if f.file_type().unwrap().is_file() {
-            match f.path().extension() {
-                Some(ext) => {
-                    if ext == PROJECT_FILE_EXTENSION {
-                        match match serde_json::from_str(
-                            std::fs::read_to_string(f.path()).unwrap().as_str(),
-                        ) {
-                            Ok(result) => Some(result),
-                            Err(_) => None,
-                        } {
-                            Some(project) => serialized_projects.push(project),
-                            _ => {}
-                        }
-                    }
-                }
-                _ => {}
-            };
-        }
-    }
-    serialized_projects
 }
 
 #[test]

@@ -1,8 +1,7 @@
-use crate::structure::Project;
-use crate::ui::{
-    Completable, DisplayList, Drawable, InputMode, InputReceptor, InputReturn, PopupBinaryChoice,
-    PopupInputWindow, PopupMessageWindow,
-};
+use crate::popups::{BinaryChoice, InputWindow, MessageWindow};
+use crate::services::task_s::TaskService;
+use crate::structure::project::*;
+use crate::ui::{Completable, DisplayList, Drawable, InputMode, InputReceptor, InputReturn};
 use crate::{services, utils};
 use crossterm::event::KeyCode;
 use std::io::{Error, Stdout};
@@ -25,28 +24,28 @@ pub struct ProjectManagementService<'a> {
     projects_to_display: DisplayList<Project>,
     selected_project_active_tasks: Vec<ListItem<'a>>,
     selected_project_completed_tasks: Vec<ListItem<'a>>,
-    project_input_popup: PopupInputWindow,
+    task_window: TaskService,
+    project_input_popup: InputWindow,
     input_mode: InputMode,
     input_type: ProjectInputType,
     program_work_path: PathBuf,
-    message_popup: PopupMessageWindow,
-    delete_project_popup: PopupBinaryChoice,
+    message_popup: MessageWindow,
+    delete_project_popup: BinaryChoice,
 }
 
 impl<'a> ProjectManagementService<'a> {
     pub fn new(working_path: PathBuf) -> ProjectManagementService<'a> {
         let mut project_window = ProjectManagementService {
-            projects_to_display: DisplayList::from(utils::get_projects_in_path(
-                working_path.clone(),
-            )),
+            projects_to_display: DisplayList::from(get_projects_in_path(working_path.clone())),
             selected_project_active_tasks: Vec::new(),
             selected_project_completed_tasks: Vec::new(),
-            project_input_popup: PopupInputWindow::default(),
+            task_window: TaskService::default(),
+            project_input_popup: InputWindow::default(),
             input_mode: InputMode::CommandMode,
             input_type: ProjectInputType::ProjectAdd,
             program_work_path: working_path,
-            message_popup: PopupMessageWindow::default(),
-            delete_project_popup: PopupBinaryChoice::default(),
+            message_popup: MessageWindow::default(),
+            delete_project_popup: BinaryChoice::default(),
         };
         if project_window.projects_to_display.array.len() > 0 {
             project_window.update_project_selection();
@@ -60,7 +59,7 @@ impl<'a> ProjectManagementService<'a> {
     }
 
     fn reload_projects(&mut self) {
-        self.update_projects(utils::get_projects_in_path(self.program_work_path.clone()));
+        self.update_projects(get_projects_in_path(self.program_work_path.clone()));
     }
 
     fn update_project_selection(&mut self) {
@@ -81,13 +80,13 @@ impl<'a> ProjectManagementService<'a> {
     }
 
     fn create_popup_with_message(&mut self, message: String) {
-        self.message_popup = PopupMessageWindow::new(message);
+        self.message_popup = MessageWindow::new(message);
     }
 
     fn add_project_request(&mut self) {
         self.input_mode = InputMode::WriteMode;
         self.input_type = ProjectInputType::ProjectAdd;
-        self.project_input_popup = PopupInputWindow::new(String::from("Insert project name"));
+        self.project_input_popup = InputWindow::new(String::from("Insert project name"));
     }
 
     fn write_project_to_disk(&self, project_to_write: Project) -> Result<(), Error> {
@@ -100,7 +99,7 @@ impl<'a> ProjectManagementService<'a> {
         if self.projects_to_display.array.len() > 0 {
             let popup_description =
                 String::from("Delete project: ").add(self.get_selected_project_name().as_str());
-            self.delete_project_popup = PopupBinaryChoice::new(popup_description);
+            self.delete_project_popup = BinaryChoice::new(popup_description);
             self.input_mode = InputMode::WriteMode;
         }
     }
@@ -109,7 +108,7 @@ impl<'a> ProjectManagementService<'a> {
         if self.projects_to_display.array.len() > 0 {
             self.input_mode = InputMode::WriteMode;
             self.input_type = ProjectInputType::ProjectNameEdit;
-            self.project_input_popup = PopupInputWindow::new(String::from("Edit project name"));
+            self.project_input_popup = InputWindow::new(String::from("Edit project name"));
             self.project_input_popup.set_input_string(
                 self.projects_to_display.array[self.projects_to_display.state.selected().unwrap()]
                     .name
@@ -122,8 +121,7 @@ impl<'a> ProjectManagementService<'a> {
         if self.projects_to_display.array.len() > 0 {
             self.input_mode = InputMode::WriteMode;
             self.input_type = ProjectInputType::ProjectDescriptionEdit;
-            self.project_input_popup =
-                PopupInputWindow::new(String::from("Edit project description"));
+            self.project_input_popup = InputWindow::new(String::from("Edit project description"));
             self.project_input_popup.set_input_string(
                 self.projects_to_display.array[self.projects_to_display.state.selected().unwrap()]
                     .description
@@ -144,6 +142,14 @@ impl<'a> ProjectManagementService<'a> {
             None => None,
         }
     }
+
+    fn make_task_window_active(&mut self) {
+        self.input_mode = InputMode::SubWindowInputs;
+        self.task_window = TaskService::new(
+            self.program_work_path.clone(),
+            self.get_selected_project_name(),
+        );
+    }
 }
 
 impl<'a> InputReceptor for ProjectManagementService<'a> {
@@ -158,6 +164,10 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                     self.projects_to_display.next();
                     self.update_project_selection();
                 }
+                KeyCode::Tab => {
+                    self.make_task_window_active();
+                }
+                KeyCode::Enter => self.make_task_window_active(),
                 KeyCode::Char('a') => {
                     self.add_project_request();
                 }
@@ -193,7 +203,7 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                                     self.create_popup_with_message(e.to_string());
                                 }
                             };
-                            self.update_projects(utils::get_projects_in_path(
+                            self.update_projects(get_projects_in_path(
                                 self.program_work_path.clone(),
                             ));
                         }
@@ -203,6 +213,9 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                     self.input_mode = InputMode::CommandMode;
                     self.handle_input_key(key_code);
                 }
+            }
+            InputMode::SubWindowInputs => {
+                self.task_window.handle_input_key(key_code);
             }
         }
 
@@ -282,7 +295,9 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
     }
 
     fn get_controls_description(&self) -> String {
-        if self.message_popup.is_active() {
+        if let InputMode::SubWindowInputs = self.input_mode {
+            //self.get_controls_description();
+        } else if self.message_popup.is_active() {
             return self.message_popup.get_controls_description();
         } else if self.delete_project_popup.is_active() {
             return self.delete_project_popup.get_controls_description();
@@ -296,12 +311,20 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
         match self.input_mode {
             InputMode::CommandMode => InputMode::CommandMode,
             InputMode::WriteMode => InputMode::WriteMode,
+            InputMode::SubWindowInputs => InputMode::SubWindowInputs,
         }
     }
 }
 
 impl<'a> Drawable for ProjectManagementService<'a> {
     fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
+        match self.input_mode {
+            InputMode::SubWindowInputs => {
+                self.task_window.display(frame, layout);
+                return;
+            }
+            _ => {}
+        }
         let main_layout = Layout::default()
             .direction(Direction::Horizontal)
             .margin(1)
@@ -344,7 +367,8 @@ impl<'a> Drawable for ProjectManagementService<'a> {
                     .clone()
                     .description,
             )
-            .block(block).wrap(Wrap{trim : false}),
+            .block(block)
+            .wrap(Wrap { trim: false }),
             false => Paragraph::new("").block(block),
         };
         frame.render_widget(p_description, project_layout[1]);

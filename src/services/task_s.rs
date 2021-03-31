@@ -1,9 +1,11 @@
-use crate::services::task_service::TaskInputChoice::{AddName, EditDescription};
+use crate::popups::{InputWindow, MessageWindow};
+use crate::services::task_s::TaskInputChoice::{AddName, EditDescription};
 use crate::services::Service;
-use crate::structure::{Project, Task, TaskContainer};
+use crate::structure::project::*;
+use crate::structure::task::Task;
+use crate::structure::*;
 use crate::ui::InputMode::CommandMode;
 use crate::ui::{Completable, DisplayList, Drawable, InputMode, InputReceptor, InputReturn};
-use crate::ui::{PopupInputWindow, PopupMessageWindow};
 use crate::utils;
 use crossterm::event::KeyCode;
 use std::io::Stdout;
@@ -31,9 +33,9 @@ pub struct TaskService {
     completed_tasks_list: DisplayList<Task>,
     focused_on_active: bool,
     input_mode: InputMode,
-    input_popup: PopupInputWindow,
+    input_popup: InputWindow,
     input_popup_type: TaskInputChoice,
-    message_popup: PopupMessageWindow,
+    message_popup: MessageWindow,
 }
 
 impl TaskService {
@@ -42,7 +44,7 @@ impl TaskService {
             .join(String::from('.').add(utils::PROJECT_FILE_EXTENSION))
             .with_file_name(project_name);
         project_path.set_extension(utils::PROJECT_FILE_EXTENSION);
-        let loaded_project = match utils::load_project_from_path(project_path.clone()) {
+        let loaded_project = match load_project_from_path(project_path.clone()) {
             Ok(loaded_project) => loaded_project,
             Err(_) => Project::default(),
         };
@@ -53,16 +55,16 @@ impl TaskService {
             completed_tasks_list: DisplayList::from(loaded_project.completed_tasks.clone()),
             focused_on_active: true,
             input_mode: InputMode::CommandMode,
-            input_popup: PopupInputWindow::default(),
+            input_popup: InputWindow::default(),
             input_popup_type: TaskInputChoice::AddName,
-            message_popup: PopupMessageWindow::default(),
+            message_popup: MessageWindow::default(),
         }
     }
 
     fn add_task_command(&mut self) {
         self.input_popup_type = AddName;
         self.input_mode = InputMode::WriteMode;
-        self.input_popup = PopupInputWindow::new(String::from("Enter Task Name"));
+        self.input_popup = InputWindow::new(String::from("Enter Task Name"));
     }
 
     fn edit_task_description(&mut self) {
@@ -78,7 +80,7 @@ impl TaskService {
         };
         self.input_popup_type = EditDescription;
         self.input_mode = InputMode::WriteMode;
-        self.input_popup = PopupInputWindow::new(String::from("Edit tasks description"));
+        self.input_popup = InputWindow::new(String::from("Edit tasks description"));
         self.input_popup.set_input_string(input_string);
     }
 
@@ -125,11 +127,11 @@ impl TaskService {
     }
 
     fn create_message_popup(&mut self, message: String) {
-        self.message_popup = PopupMessageWindow::new(message);
+        self.message_popup = MessageWindow::new(message);
     }
 
     fn update_project(&mut self) {
-        self.selected_project = match utils::load_project_from_path(self.working_path.clone()) {
+        self.selected_project = match load_project_from_path(self.working_path.clone()) {
             Ok(updated_project) => updated_project,
             Err(e) => {
                 self.create_message_popup(e.to_string());
@@ -168,7 +170,12 @@ impl Drawable for TaskService {
                 .array
                 .clone()
                 .into_iter()
-                .map(|task| ListItem::new(Text::from(utils::wrap(task.name, task_layout[0].width as u32))))
+                .map(|task| {
+                    ListItem::new(Text::from(utils::wrap(
+                        task.name,
+                        task_layout[0].width as u32,
+                    )))
+                })
                 .collect(),
         )
         .block(active_task_block)
@@ -187,7 +194,12 @@ impl Drawable for TaskService {
                 .array
                 .clone()
                 .into_iter()
-                .map(|task| ListItem::new(Text::from(utils::wrap(task.name, task_layout[1].width as u32))))
+                .map(|task| {
+                    ListItem::new(Text::from(utils::wrap(
+                        task.name,
+                        task_layout[1].width as u32,
+                    )))
+                })
                 .collect(),
         )
         .block(completed_task_block)
@@ -391,6 +403,7 @@ impl InputReceptor for TaskService {
                     }
                 };
             }
+            _ => {}
         };
     }
 
@@ -408,6 +421,7 @@ impl InputReceptor for TaskService {
         match self.input_mode {
             InputMode::CommandMode => InputMode::CommandMode,
             InputMode::WriteMode => InputMode::WriteMode,
+            InputMode::SubWindowInputs => InputMode::SubWindowInputs,
         }
     }
 }
