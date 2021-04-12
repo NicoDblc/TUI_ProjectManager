@@ -12,6 +12,7 @@ use tui::layout::{Constraint, Direction, Layout, Rect};
 use tui::text::Text;
 use tui::widgets::{Block, Borders, List, ListItem, Paragraph, Wrap};
 use tui::Frame;
+use crate::structure::application::ApplicationState;
 
 enum ProjectInputType {
     ProjectAdd,
@@ -24,13 +25,13 @@ pub struct ProjectManagementService<'a> {
     projects_to_display: DisplayList<Project>,
     selected_project_active_tasks: Vec<ListItem<'a>>,
     selected_project_completed_tasks: Vec<ListItem<'a>>,
-    task_window: TaskService,
     project_input_popup: InputWindow,
     input_mode: InputMode,
     input_type: ProjectInputType,
     program_work_path: PathBuf,
     message_popup: MessageWindow,
     delete_project_popup: BinaryChoice,
+    application_state: ApplicationState,
 }
 
 impl<'a> ProjectManagementService<'a> {
@@ -39,13 +40,13 @@ impl<'a> ProjectManagementService<'a> {
             projects_to_display: DisplayList::from(get_projects_in_path(working_path.clone())),
             selected_project_active_tasks: Vec::new(),
             selected_project_completed_tasks: Vec::new(),
-            task_window: TaskService::default(),
             project_input_popup: InputWindow::default(),
             input_mode: InputMode::CommandMode,
             input_type: ProjectInputType::ProjectAdd,
             program_work_path: working_path,
             message_popup: MessageWindow::default(),
             delete_project_popup: BinaryChoice::default(),
+            application_state: ApplicationState::default(),
         };
         if project_window.projects_to_display.array.len() > 0 {
             project_window.update_project_selection();
@@ -143,17 +144,10 @@ impl<'a> ProjectManagementService<'a> {
         }
     }
 
-    fn make_task_window_active(&mut self) {
-        self.input_mode = InputMode::SubWindowInputs;
-        self.task_window = TaskService::new(
-            self.program_work_path.clone(),
-            self.get_selected_project_name(),
-        );
-    }
 }
 
 impl<'a> InputReceptor for ProjectManagementService<'a> {
-    fn handle_input_key(&mut self, key_code: KeyCode) {
+    fn handle_input_key(&mut self, key_code: KeyCode) -> bool{
         match self.input_mode {
             InputMode::CommandMode => match key_code {
                 KeyCode::Up => {
@@ -164,10 +158,6 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                     self.projects_to_display.next();
                     self.update_project_selection();
                 }
-                KeyCode::Tab => {
-                    self.make_task_window_active();
-                }
-                KeyCode::Enter => self.make_task_window_active(),
                 KeyCode::Char('a') => {
                     self.add_project_request();
                 }
@@ -180,7 +170,9 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                 KeyCode::Char('n') => {
                     self.edit_selected_project_name();
                 }
-                _ => {}
+                _ => {
+                    return false
+                }
             },
             InputMode::WriteMode => {
                 if self.message_popup.is_active() {
@@ -214,9 +206,6 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                     self.handle_input_key(key_code);
                 }
             }
-            InputMode::SubWindowInputs => {
-                self.task_window.handle_input_key(key_code);
-            }
         }
 
         if self.project_input_popup.is_active() & self.project_input_popup.is_completed() {
@@ -227,7 +216,6 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                         Ok(_) => {
                             self.reload_projects();
                             self.project_input_popup.set_active(false);
-                            // self.input_mode = InputMode::CommandMode;
                         }
                         Err(e) => {
                             self.create_popup_with_message(
@@ -236,7 +224,6 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                                     .add(self.program_work_path.clone().to_str().unwrap()),
                             );
                             self.project_input_popup.reset_completion();
-                            return;
                         }
                     };
                 }
@@ -259,7 +246,7 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                                 Err(e) => {
                                     self.create_popup_with_message(e.to_string());
                                     self.project_input_popup.reset_completion();
-                                    return;
+                                    return true
                                 }
                             };
                             self.reload_projects();
@@ -268,7 +255,7 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                         Err(e) => {
                             self.create_popup_with_message(e.to_string());
                             self.project_input_popup.reset_completion();
-                            return;
+                            return false
                         }
                     }
                 }
@@ -282,22 +269,22 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
                         Ok(_) => {
                             self.reload_projects();
                             self.project_input_popup.set_active(false);
+                            return true
                         }
                         Err(e) => {
                             self.create_popup_with_message(e.to_string());
                             self.project_input_popup.reset_completion();
-                            return;
+                            return false
                         }
                     };
                 }
             };
         }
+        true
     }
 
     fn get_controls_description(&self) -> String {
-        if let InputMode::SubWindowInputs = self.input_mode {
-            //self.get_controls_description();
-        } else if self.message_popup.is_active() {
+        if self.message_popup.is_active() {
             return self.message_popup.get_controls_description();
         } else if self.delete_project_popup.is_active() {
             return self.delete_project_popup.get_controls_description();
@@ -310,21 +297,13 @@ impl<'a> InputReceptor for ProjectManagementService<'a> {
     fn get_input_mode(&self) -> InputMode {
         match self.input_mode {
             InputMode::CommandMode => InputMode::CommandMode,
-            InputMode::WriteMode => InputMode::WriteMode,
-            InputMode::SubWindowInputs => InputMode::SubWindowInputs,
+            InputMode::WriteMode => InputMode::WriteMode
         }
     }
 }
 
 impl<'a> Drawable for ProjectManagementService<'a> {
-    fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
-        match self.input_mode {
-            InputMode::SubWindowInputs => {
-                self.task_window.display(frame, layout);
-                return;
-            }
-            _ => {}
-        }
+    fn draw(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
         let main_layout = Layout::default()
             .direction(Direction::Horizontal)
             .margin(1)
@@ -388,13 +367,13 @@ impl<'a> Drawable for ProjectManagementService<'a> {
             List::new(self.selected_project_completed_tasks.clone()).block(block);
         frame.render_widget(completed_tasks_list, task_layout[1]);
         if self.project_input_popup.is_active() {
-            self.project_input_popup.display(frame, layout);
+            self.project_input_popup.draw(frame, layout);
         }
         if self.delete_project_popup.is_active() {
-            self.delete_project_popup.display(frame, layout);
+            self.delete_project_popup.draw(frame, layout);
         }
         if self.message_popup.is_active() {
-            self.message_popup.display(frame, layout);
+            self.message_popup.draw(frame, layout);
         }
     }
 }
@@ -402,5 +381,21 @@ impl<'a> Drawable for ProjectManagementService<'a> {
 impl<'a> services::Service for ProjectManagementService<'a> {
     fn set_working_directory(&mut self, path: PathBuf) {
         self.program_work_path = path;
+    }
+    fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect){
+        self.draw(frame, layout);
+    }
+    fn handle_input(&mut self, key_code: KeyCode) -> bool {self.handle_input_key(key_code)}
+    fn get_input_possibilities(&self) -> String {self.get_controls_description()}
+
+    fn update_application_state(&mut self, application_state: &mut ApplicationState) {
+        let mut selected_index = usize::from(0 as u8);
+        let valid_index = match self.projects_to_display.state.selected() {
+            Some(T) => { selected_index = T; true},
+            None => false,
+        };
+        if valid_index  {
+            application_state.selected_project = self.projects_to_display.array[selected_index].clone();
+        }
     }
 }

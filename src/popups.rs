@@ -49,7 +49,7 @@ impl Completable for MessageWindow {
 }
 
 impl Drawable for MessageWindow {
-    fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
+    fn draw(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
         let popup_layout = self.centered_rect(50, 25, layout);
         frame.render_widget(Clear, popup_layout);
         let popup_block = Block::default().borders(Borders::ALL);
@@ -74,13 +74,14 @@ impl Drawable for MessageWindow {
 }
 
 impl InputReceptor for MessageWindow {
-    fn handle_input_key(&mut self, key_code: KeyCode) {
+    fn handle_input_key(&mut self, key_code: KeyCode) -> bool{
         match key_code {
             KeyCode::Enter => {
                 self.is_done = true;
             }
-            _ => {}
+            _ => {return false}
         }
+        true
     }
 
     fn get_controls_description(&self) -> String {
@@ -118,13 +119,14 @@ impl BinaryChoice {
 }
 
 impl InputReceptor for BinaryChoice {
-    fn handle_input_key(&mut self, key_code: KeyCode) {
+    fn handle_input_key(&mut self, key_code: KeyCode) -> bool{
         match key_code {
             KeyCode::Left => self.current_choice = true,
             KeyCode::Right => self.current_choice = false,
             KeyCode::Enter => self.is_completed = true,
-            _ => {}
+            _ => {return false}
         }
+        true
     }
 
     fn get_controls_description(&self) -> String {
@@ -155,7 +157,7 @@ impl Completable for BinaryChoice {
 }
 
 impl Drawable for BinaryChoice {
-    fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
+    fn draw(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
         let popup_layout = self.centered_rect(50, 20, layout);
         frame.render_widget(Clear, popup_layout);
         let main_split = Layout::default()
@@ -215,7 +217,7 @@ impl InputWindow {
 }
 
 impl Drawable for InputWindow {
-    fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
+    fn draw(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
         let popup_layout = self.centered_rect(50, 25, layout);
         frame.render_widget(Clear, popup_layout);
         let popup_block = Block::default().borders(Borders::ALL);
@@ -259,24 +261,29 @@ impl InputReturn for InputWindow {
 }
 
 impl InputReceptor for InputWindow {
-    fn handle_input_key(&mut self, key_code: KeyCode) {
+    fn handle_input_key(&mut self, key_code: KeyCode) -> bool {
         match key_code {
             KeyCode::Char(char) => {
                 self.input_string.push(char);
+                return true
             }
             KeyCode::Backspace => {
                 if self.input_string.len() > 0 {
                     self.input_string.pop();
                 }
+                return true
             }
             KeyCode::Enter => {
                 self.message_input_finished = true;
+                return true
             }
             KeyCode::Esc => {
                 self.set_active(false);
+                return true
             }
-            _ => {}
+            _ => {false}
         };
+        false
     }
 
     fn get_controls_description(&self) -> String {

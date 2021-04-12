@@ -17,6 +17,7 @@ use tui::layout::{Constraint, Layout, Rect};
 use tui::text::Text;
 use tui::widgets::{Block, Borders, List, ListItem, Paragraph, Wrap};
 use tui::Frame;
+use crate::structure::application::ApplicationState;
 
 #[derive(SmartDefault)]
 enum TaskInputChoice {
@@ -148,10 +149,29 @@ impl Service for TaskService {
     fn set_working_directory(&mut self, path: PathBuf) {
         self.working_path = path;
     }
+    fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect){
+        self.draw(frame, layout);
+    }
+    fn handle_input(&mut self, key_code: KeyCode) -> bool{self.handle_input_key(key_code)}
+    fn get_input_possibilities(&self) -> String {self.get_controls_description()}
+
+    fn update_application_state(&mut self, application_state: &mut ApplicationState) {
+        // Set project path:
+        let mut project_path = application_state.folder_path.clone().join(application_state.selected_project.clone().name
+        );
+        project_path.set_extension(utils::PROJECT_FILE_EXTENSION);
+        self.selected_project = match load_project_from_path(project_path) {
+            Ok(loaded_project) => loaded_project,
+            Err(_) => Project::default(),
+        };
+        self.active_tasks_list = DisplayList::from(self.selected_project.active_tasks.clone());
+        self.completed_tasks_list = DisplayList::from(self.selected_project.completed_tasks.clone())
+
+    }
 }
 
 impl Drawable for TaskService {
-    fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
+    fn draw(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect) {
         let initial_layout = Layout::default()
             .direction(Vertical)
             .constraints([Constraint::Percentage(60), Constraint::Percentage(40)])
@@ -243,16 +263,16 @@ impl Drawable for TaskService {
 
         // Popups
         if self.input_popup.is_active() {
-            self.input_popup.display(frame, layout);
+            self.input_popup.draw(frame, layout);
         }
         if self.message_popup.is_active() {
-            self.message_popup.display(frame, layout);
+            self.message_popup.draw(frame, layout);
         }
     }
 }
 
 impl InputReceptor for TaskService {
-    fn handle_input_key(&mut self, key_code: KeyCode) {
+    fn handle_input_key(&mut self, key_code: KeyCode) -> bool{
         match self.input_mode {
             InputMode::CommandMode => match key_code {
                 KeyCode::Left => {
@@ -293,7 +313,7 @@ impl InputReceptor for TaskService {
                         self.completed_tasks_list.next();
                     }
                 }
-                _ => {}
+                _ => {return false}
             },
             InputMode::WriteMode => {
                 match key_code {
@@ -302,13 +322,13 @@ impl InputReceptor for TaskService {
                             self.message_popup.handle_input_key(key_code);
                             if self.message_popup.is_completed() {
                                 self.message_popup.set_active(false);
-                                return;
+                                return true
                             }
                         }
                         self.input_popup.handle_input_key(key_code);
                         if !self.input_popup.is_active() {
                             self.input_mode = CommandMode;
-                            return;
+                            return true
                         }
                         if self.input_popup.is_completed() {
                             match self.input_popup_type {
@@ -403,8 +423,9 @@ impl InputReceptor for TaskService {
                     }
                 };
             }
-            _ => {}
+            _ => {return false}
         };
+        true
     }
 
     fn get_controls_description(&self) -> String {
@@ -420,8 +441,7 @@ impl InputReceptor for TaskService {
     fn get_input_mode(&self) -> InputMode {
         match self.input_mode {
             InputMode::CommandMode => InputMode::CommandMode,
-            InputMode::WriteMode => InputMode::WriteMode,
-            InputMode::SubWindowInputs => InputMode::SubWindowInputs,
+            InputMode::WriteMode => InputMode::WriteMode
         }
     }
 }

@@ -1,5 +1,5 @@
 mod structure;
-use crossterm::event::{self, Event as CEvent};
+use crossterm::event::{self, Event as CEvent, KeyModifiers};
 use std::{
     sync::mpsc,
     thread,
@@ -44,12 +44,13 @@ fn main() {
 
     let mut app = structure::application::Application::new(utils::get_working_folder());
     while app.is_running {
-        app.update();
         match rx.recv().unwrap() {
-            Event::Input(event) => match event.code {
-                _ => app.handle_inputs(event.code),
+            Event::Input(event) => {
+                app.handle_inputs(event)
             },
-            Event::Tick => {}
+            Event::Tick => {
+                app.update();
+            }
         }
     }
 }

@@ -19,11 +19,10 @@ pub enum InputMode {
     #[default]
     CommandMode,
     WriteMode,
-    SubWindowInputs,
 }
 
 pub trait Drawable {
-    fn display(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect);
+    fn draw(&self, frame: &mut Frame<CrosstermBackend<Stdout>>, layout: Rect);
     fn centered_rect(&self, percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         let popup_layout = Layout::default()
             .direction(Direction::Vertical)
@@ -52,7 +51,8 @@ pub trait Drawable {
 }
 
 pub trait InputReceptor {
-    fn handle_input_key(&mut self, key_code: KeyCode);
+    // TODO: Change to inputEvent instead of code
+    fn handle_input_key(&mut self, key_code: KeyCode) -> bool;
     fn get_controls_description(&self) -> String;
     fn get_input_mode(&self) -> InputMode;
 }
