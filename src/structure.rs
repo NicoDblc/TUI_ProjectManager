@@ -216,7 +216,7 @@ impl Project {
         match std::fs::write(path_for_project.clone(), project_string) {
             Ok(()) => Ok(()),
             Err(e) => {
-                println!("Fucking error: {}", path_for_project.to_str().unwrap());
+                println!("Error: {}", path_for_project.to_str().unwrap());
                 return Result::Err(e);
             }
         }
